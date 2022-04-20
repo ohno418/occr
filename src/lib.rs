@@ -1,7 +1,7 @@
 pub fn compile(input: &str) -> Result<String, String> {
     let num: i32 = match input.parse() {
         Ok(n) => n,
-        Err(_) => return Err("No".to_string()),
+        Err(_) => return Err("expected a number as input".to_string()),
     };
 
     Ok(format!(

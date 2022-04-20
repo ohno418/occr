@@ -6,14 +6,14 @@ use std::process;
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
-        eprintln!("Required only one argument.");
+        eprintln!("Required only one argument");
         process::exit(1)
     }
 
     let asm = match compile(&args[1]) {
         Ok(asm) => asm,
         Err(err) => {
-            eprintln!("failed to compiler: {}", err);
+            eprintln!("Failed to compile: {}", err);
             process::exit(1);
         }
     };
