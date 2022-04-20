@@ -1,4 +1,4 @@
-use occr::compile;
+use rocc::compile;
 
 use std::env;
 use std::process;
