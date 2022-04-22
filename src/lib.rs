@@ -1,20 +1,12 @@
-pub fn compile(input: &str) -> Result<String, String> {
-    let num: i32 = match input.parse() {
-        Ok(n) => n,
-        Err(_) => return Err("expected a number as input".to_string()),
-    };
+mod codegen;
+mod lexer;
+mod parser;
 
-    Ok(format!(
-        "\
-    .intel_syntax noprefix
-    .text
-    .globl main
-main:
-    mov rax, {}
-    ret
-",
-        num
-    ))
+pub fn compile(input: &str) -> Result<String, String> {
+    let tokens = lexer::tokenize(input)?;
+    let ast = parser::parse(&tokens)?;
+    let asm = codegen::gen(&ast);
+    Ok(asm)
 }
 
 #[cfg(test)]
