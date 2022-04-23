@@ -16,7 +16,7 @@ assert() {
   fi
 }
 
-cargo b
+cargo build
 
 assert "42" "42"
 assert "123" "123"
