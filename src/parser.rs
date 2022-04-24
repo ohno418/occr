@@ -157,18 +157,25 @@ mod tests {
     #[test]
     fn parses_mul_expr_with_add() {
         // 1+2*3-4
-        let tokens = vec![Token::Num(1), Token::Op(OpKind::Add), Token::Num(2), Token::Op(OpKind::Mul), Token::Num(3), Token::Op(OpKind::Sub), Token::Num(4)];
-        let expected =
-            Node::Sub(Binary {
-                lhs: Box::new(Node::Add(Binary {
-                    lhs: Box::new(Node::Num(1)),
-                    rhs: Box::new(Node::Mul(Binary {
-                        lhs: Box::new(Node::Num(2)),
-                        rhs: Box::new(Node::Num(3)),
-                    })),
+        let tokens = vec![
+            Token::Num(1),
+            Token::Op(OpKind::Add),
+            Token::Num(2),
+            Token::Op(OpKind::Mul),
+            Token::Num(3),
+            Token::Op(OpKind::Sub),
+            Token::Num(4),
+        ];
+        let expected = Node::Sub(Binary {
+            lhs: Box::new(Node::Add(Binary {
+                lhs: Box::new(Node::Num(1)),
+                rhs: Box::new(Node::Mul(Binary {
+                    lhs: Box::new(Node::Num(2)),
+                    rhs: Box::new(Node::Num(3)),
                 })),
-                rhs: Box::new(Node::Num(4)),
-            });
+            })),
+            rhs: Box::new(Node::Num(4)),
+        });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
@@ -176,18 +183,25 @@ mod tests {
     #[test]
     fn parses_div_expr_with_add() {
         // 1+3/2-4
-        let tokens = vec![Token::Num(1), Token::Op(OpKind::Add), Token::Num(3), Token::Op(OpKind::Div), Token::Num(2), Token::Op(OpKind::Sub), Token::Num(4)];
-        let expected =
-            Node::Sub(Binary {
-                lhs: Box::new(Node::Add(Binary {
-                    lhs: Box::new(Node::Num(1)),
-                    rhs: Box::new(Node::Div(Binary {
-                        lhs: Box::new(Node::Num(3)),
-                        rhs: Box::new(Node::Num(2)),
-                    })),
+        let tokens = vec![
+            Token::Num(1),
+            Token::Op(OpKind::Add),
+            Token::Num(3),
+            Token::Op(OpKind::Div),
+            Token::Num(2),
+            Token::Op(OpKind::Sub),
+            Token::Num(4),
+        ];
+        let expected = Node::Sub(Binary {
+            lhs: Box::new(Node::Add(Binary {
+                lhs: Box::new(Node::Num(1)),
+                rhs: Box::new(Node::Div(Binary {
+                    lhs: Box::new(Node::Num(3)),
+                    rhs: Box::new(Node::Num(2)),
                 })),
-                rhs: Box::new(Node::Num(4)),
-            });
+            })),
+            rhs: Box::new(Node::Num(4)),
+        });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
