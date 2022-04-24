@@ -4,15 +4,17 @@ pub enum Token {
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
-    // TODO: Can improve with a closure?
     let mut tokens: Vec<Token> = Vec::new();
+
     for word in input.split_whitespace() {
         if let Ok(num) = word.parse() {
             tokens.push(Token::Num(num));
-        } else {
-            return Err("Failed to tokenize".to_string())
+            continue;
         }
+
+        return Err("Failed to tokenize".to_string());
     }
+
     Ok(tokens)
 }
 
