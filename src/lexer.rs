@@ -8,6 +8,7 @@ pub enum Token {
 #[derive(Debug, PartialEq)]
 pub enum OpKind {
     Add, // +
+    Sub, // -
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
@@ -35,10 +36,20 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
         }
 
         // operator
-        if c == '+' {
-            tokens.push(Token::Op(OpKind::Add));
-            rest = &rest[1..];
-            continue;
+        if c.is_ascii_punctuation() {
+            if c == '+' {
+                tokens.push(Token::Op(OpKind::Add));
+                rest = &rest[1..];
+                continue;
+            }
+
+            if c == '-' {
+                tokens.push(Token::Op(OpKind::Sub));
+                rest = &rest[1..];
+                continue;
+            }
+
+            return Err(format!("unknown punctuator: {}", c));
         }
 
         return Err(format!("Failed to tokenize: {}", c));
@@ -104,6 +115,14 @@ mod tests {
     fn tokenizes_add_expr() {
         let input = "12+23";
         let expected = vec![Token::Num(12), Token::Op(OpKind::Add), Token::Num(23)];
+        let actual = tokenize(input).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tokenizes_sub_expr() {
+        let input = "23-12";
+        let expected = vec![Token::Num(23), Token::Op(OpKind::Sub), Token::Num(12)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }

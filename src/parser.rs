@@ -4,6 +4,7 @@ use crate::lexer::{OpKind, Token};
 pub enum Node {
     Num(u64),
     Add(Binary), // +
+    Sub(Binary), // -
 }
 
 #[derive(Debug, PartialEq)]
@@ -21,18 +22,23 @@ pub fn parse(tokens: &[Token]) -> Result<Node, String> {
     Ok(node)
 }
 
-// <add> ::= <num> ("+" <num>)*
+// <add> ::= <num> (("+" | "-") <num>)*
 fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
     let (mut node, mut rest) = parse_num(tokens)?;
 
-    while let Some(Token::Op(OpKind::Add)) = rest.get(0) {
+    while let Some(Token::Op(op_kind)) = rest.get(0) {
         let lhs = node;
         let rhs;
         (rhs, rest) = parse_num(&rest[1..])?;
-        node = Node::Add(Binary {
+
+        let bin = Binary {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
-        });
+        };
+        match op_kind {
+            OpKind::Add => node = Node::Add(bin),
+            OpKind::Sub => node = Node::Sub(bin),
+        }
     }
 
     Ok((node, rest))
@@ -85,6 +91,17 @@ mod tests {
                 rhs: Box::new(Node::Num(23)),
             })),
             rhs: Box::new(Node::Num(34)),
+        });
+        let actual = parse(&tokens).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn parses_sub_expr() {
+        let tokens = vec![Token::Num(23), Token::Op(OpKind::Sub), Token::Num(12)];
+        let expected = Node::Sub(Binary {
+            lhs: Box::new(Node::Num(23)),
+            rhs: Box::new(Node::Num(12)),
         });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);

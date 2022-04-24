@@ -26,6 +26,15 @@ fn gen_expr(ast: &Node) -> String {
             s.push_str("    push rax\n");
             s
         }
+        Node::Sub(Binary { lhs, rhs }) => {
+            let mut s = gen_expr(lhs);
+            s.push_str("    pop rax\n");
+            s.push_str(&gen_expr(rhs));
+            s.push_str("    pop rdi\n");
+            s.push_str("    sub rax, rdi\n");
+            s.push_str("    push rax\n");
+            s
+        }
     }
 }
 
@@ -91,6 +100,25 @@ main:
     push 34
     pop rax
     add rax, rdi
+    push rax
+";
+            let actual = gen_expr(&ast);
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn gen_sub_expr() {
+            let lhs = Node::Num(23);
+            let rhs = Node::Num(12);
+            let ast = Node::Sub(Binary {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            });
+            let expected = "    push 23
+    pop rax
+    push 12
+    pop rdi
+    sub rax, rdi
     push rax
 ";
             let actual = gen_expr(&ast);
