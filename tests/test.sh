@@ -21,5 +21,7 @@ cargo build
 assert "42" "42"
 assert "123" "123"
 assert "  42 " "42"
+assert "12+23" "35"
+assert "12+23+34" "69"
 
 echo OK

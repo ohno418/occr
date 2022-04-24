@@ -1,6 +1,13 @@
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Num(u64),
+    // operator
+    Op(OpKind),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum OpKind {
+    Add, // +
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
@@ -24,6 +31,13 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
             let num;
             (num, rest) = take_number_from_start(&rest).expect("failed to take number");
             tokens.push(Token::Num(num));
+            continue;
+        }
+
+        // operator
+        if c == '+' {
+            tokens.push(Token::Op(OpKind::Add));
+            rest = &rest[1..];
             continue;
         }
 
@@ -82,6 +96,14 @@ mod tests {
     fn tokenizes_with_spaces() {
         let input = "  42 ";
         let expected = vec![Token::Num(42)];
+        let actual = tokenize(input).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tokenizes_add_expr() {
+        let input = "12+23";
+        let expected = vec![Token::Num(12), Token::Op(OpKind::Add), Token::Num(23)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
