@@ -10,6 +10,7 @@ pub enum OpKind {
     Add, // +
     Sub, // -
     Mul, // *
+    Div, // /
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
@@ -52,6 +53,12 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
 
             if c == '*' {
                 tokens.push(Token::Op(OpKind::Mul));
+                rest = &rest[1..];
+                continue;
+            }
+
+            if c == '/' {
+                tokens.push(Token::Op(OpKind::Div));
                 rest = &rest[1..];
                 continue;
             }
@@ -138,6 +145,14 @@ mod tests {
     fn tokenizes_mul_expr() {
         let input = "2*3";
         let expected = vec![Token::Num(2), Token::Op(OpKind::Mul), Token::Num(3)];
+        let actual = tokenize(input).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tokenizes_div_expr() {
+        let input = "9/3";
+        let expected = vec![Token::Num(9), Token::Op(OpKind::Div), Token::Num(3)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
