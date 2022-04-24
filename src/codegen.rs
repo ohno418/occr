@@ -19,8 +19,8 @@ fn gen_expr(ast: &Node) -> String {
         Node::Num(n) => format!("    push {}\n", n),
         Node::Add(Binary { lhs, rhs }) => {
             let mut s = gen_expr(lhs);
-            s.push_str("    pop rdi\n");
             s.push_str(&gen_expr(rhs));
+            s.push_str("    pop rdi\n");
             s.push_str("    pop rax\n");
             s.push_str("    add rax, rdi\n");
             s.push_str("    push rax\n");
@@ -28,9 +28,9 @@ fn gen_expr(ast: &Node) -> String {
         }
         Node::Sub(Binary { lhs, rhs }) => {
             let mut s = gen_expr(lhs);
-            s.push_str("    pop rax\n");
             s.push_str(&gen_expr(rhs));
             s.push_str("    pop rdi\n");
+            s.push_str("    pop rax\n");
             s.push_str("    sub rax, rdi\n");
             s.push_str("    push rax\n");
             s
@@ -69,8 +69,8 @@ main:
                 rhs: Box::new(rhs),
             });
             let expected = "    push 12
-    pop rdi
     push 23
+    pop rdi
     pop rax
     add rax, rdi
     push rax
@@ -91,13 +91,13 @@ main:
                 rhs: Box::new(rhs),
             });
             let expected = "    push 12
-    pop rdi
     push 23
+    pop rdi
     pop rax
     add rax, rdi
     push rax
-    pop rdi
     push 34
+    pop rdi
     pop rax
     add rax, rdi
     push rax
@@ -115,9 +115,9 @@ main:
                 rhs: Box::new(rhs),
             });
             let expected = "    push 23
-    pop rax
     push 12
     pop rdi
+    pop rax
     sub rax, rdi
     push rax
 ";
