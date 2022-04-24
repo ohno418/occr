@@ -5,6 +5,7 @@ pub enum Node {
     Num(u64),
     Add(Binary), // +
     Sub(Binary), // -
+    Mul(Binary), // *
 }
 
 #[derive(Debug, PartialEq)]
@@ -22,14 +23,14 @@ pub fn parse(tokens: &[Token]) -> Result<Node, String> {
     Ok(node)
 }
 
-// <add> ::= <num> (("+" | "-") <num>)*
+// <add> ::= <mul> (("+" | "-") <mul>)*
 fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
-    let (mut node, mut rest) = parse_num(tokens)?;
+    let (mut node, mut rest) = parse_mul(tokens)?;
 
     while let Some(Token::Op(op_kind)) = rest.get(0) {
         let lhs = node;
         let rhs;
-        (rhs, rest) = parse_num(&rest[1..])?;
+        (rhs, rest) = parse_mul(&rest[1..])?;
 
         let bin = Binary {
             lhs: Box::new(lhs),
@@ -38,7 +39,27 @@ fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
         match op_kind {
             OpKind::Add => node = Node::Add(bin),
             OpKind::Sub => node = Node::Sub(bin),
+            _ => unreachable!(),
         }
+    }
+
+    Ok((node, rest))
+}
+
+// <mul> ::= <num> ("*" <num>)*
+fn parse_mul(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
+    let (mut node, mut rest) = parse_num(tokens)?;
+
+    while let Some(Token::Op(OpKind::Mul)) = rest.get(0) {
+        let lhs = node;
+        let rhs;
+        (rhs, rest) = parse_num(&rest[1..])?;
+
+        let bin = Binary {
+            lhs: Box::new(lhs),
+            rhs: Box::new(rhs),
+        };
+        node = Node::Mul(bin);
     }
 
     Ok((node, rest))
@@ -103,6 +124,36 @@ mod tests {
             lhs: Box::new(Node::Num(23)),
             rhs: Box::new(Node::Num(12)),
         });
+        let actual = parse(&tokens).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn parses_mul_expr() {
+        let tokens = vec![Token::Num(2), Token::Op(OpKind::Mul), Token::Num(3)];
+        let expected = Node::Mul(Binary {
+            lhs: Box::new(Node::Num(2)),
+            rhs: Box::new(Node::Num(3)),
+        });
+        let actual = parse(&tokens).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn parses_mul_expr_with_add() {
+        // 1+2*3-4
+        let tokens = vec![Token::Num(1), Token::Op(OpKind::Add), Token::Num(2), Token::Op(OpKind::Mul), Token::Num(3), Token::Op(OpKind::Sub), Token::Num(4)];
+        let expected =
+            Node::Sub(Binary {
+                lhs: Box::new(Node::Add(Binary {
+                    lhs: Box::new(Node::Num(1)),
+                    rhs: Box::new(Node::Mul(Binary {
+                        lhs: Box::new(Node::Num(2)),
+                        rhs: Box::new(Node::Num(3)),
+                    })),
+                })),
+                rhs: Box::new(Node::Num(4)),
+            });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
