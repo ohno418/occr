@@ -15,9 +15,9 @@ pub struct Binary {
 // <expr> ::= <add>
 pub fn parse(tokens: &[Token]) -> Result<Node, String> {
     let (node, rest) = parse_add(tokens)?;
-
-    assert!(rest.is_empty(), "extra node: {:?}", rest);
-
+    if !rest.is_empty() {
+        return Err(format!("extra node: {:?}", rest));
+    }
     Ok(node)
 }
 
