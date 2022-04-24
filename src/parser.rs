@@ -1,4 +1,4 @@
-use crate::lexer::{Token, OpKind};
+use crate::lexer::{OpKind, Token};
 
 #[derive(Debug, PartialEq)]
 pub enum Node {
@@ -33,7 +33,7 @@ fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
         });
-    };
+    }
 
     Ok((node, rest))
 }
@@ -62,25 +62,30 @@ mod tests {
     #[test]
     fn parses_add_expr() {
         let tokens = vec![Token::Num(12), Token::Op(OpKind::Add), Token::Num(23)];
-        let expected = Node::Add(Binary { lhs: Box::new(Node::Num(12)), rhs: Box::new(Node::Num(23)) });
+        let expected = Node::Add(Binary {
+            lhs: Box::new(Node::Num(12)),
+            rhs: Box::new(Node::Num(23)),
+        });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn parses_nested_add_expr() {
-        let tokens = vec![Token::Num(12), Token::Op(OpKind::Add), Token::Num(23), Token::Op(OpKind::Add), Token::Num(34)];
-        let expected = Node::Add(
-            Binary {
-                lhs: Box::new(Node::Add(
-                    Binary {
-                        lhs: Box::new(Node::Num(12)),
-                        rhs: Box::new(Node::Num(23)),
-                    }
-                )),
-                rhs: Box::new(Node::Num(34)),
-            }
-        );
+        let tokens = vec![
+            Token::Num(12),
+            Token::Op(OpKind::Add),
+            Token::Num(23),
+            Token::Op(OpKind::Add),
+            Token::Num(34),
+        ];
+        let expected = Node::Add(Binary {
+            lhs: Box::new(Node::Add(Binary {
+                lhs: Box::new(Node::Num(12)),
+                rhs: Box::new(Node::Num(23)),
+            })),
+            rhs: Box::new(Node::Num(34)),
+        });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }

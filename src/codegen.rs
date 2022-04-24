@@ -1,4 +1,4 @@
-use crate::parser::{Node, Binary};
+use crate::parser::{Binary, Node};
 
 pub fn gen(ast: &Node) -> String {
     let mut asm = "    .intel_syntax noprefix
@@ -55,7 +55,10 @@ main:
         fn gen_add_expr() {
             let lhs = Node::Num(12);
             let rhs = Node::Num(23);
-            let ast = Node::Add(Binary { lhs: Box::new(lhs), rhs: Box::new(rhs) });
+            let ast = Node::Add(Binary {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            });
             let expected = "    push 12
     pop rdi
     push 23
