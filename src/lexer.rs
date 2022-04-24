@@ -67,7 +67,6 @@ mod tests {
         let input = "2";
         let expected = vec![Token::Num(2)];
         let actual = tokenize(input).unwrap();
-
         assert_eq!(expected, actual);
     }
 
@@ -76,7 +75,6 @@ mod tests {
         let input = "123";
         let expected = vec![Token::Num(123)];
         let actual = tokenize(input).unwrap();
-
         assert_eq!(expected, actual);
     }
 
@@ -85,7 +83,6 @@ mod tests {
         let input = "  42 ";
         let expected = vec![Token::Num(42)];
         let actual = tokenize(input).unwrap();
-
         assert_eq!(expected, actual);
     }
 
