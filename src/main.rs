@@ -13,7 +13,7 @@ fn main() {
     let asm = match compile(&args[1]) {
         Ok(asm) => asm,
         Err(err) => {
-            eprintln!("Failed to compile: {}", err);
+            eprintln!("compile failed: {}", err);
             process::exit(1);
         }
     };
