@@ -1,7 +1,7 @@
 # rocc
 A toy C compiler implementation written in Rust.
 
-# To run test
+# Test
 To run unit tests (for lexer, parser, and codegen):
 ```
 cargo test
