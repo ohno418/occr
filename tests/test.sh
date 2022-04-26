@@ -31,5 +31,7 @@ assert "3+2*3*4-7" "20"
 assert "6/2" "3"
 assert "4/3" "1"
 assert "2*3-6/2+1" "4"
+assert "1+2*3" "7"
+assert "(1+2)*3" "9"
 
 echo OK

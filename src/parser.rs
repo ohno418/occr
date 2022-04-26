@@ -15,13 +15,18 @@ pub struct Binary {
     pub rhs: Box<Node>,
 }
 
-// <expr> ::= <add>
+// <program> ::= <expr>
 pub fn parse(tokens: &[Token]) -> Result<Node, String> {
-    let (node, rest) = parse_add(tokens)?;
+    let (node, rest) = parse_expr(tokens)?;
     if !rest.is_empty() {
         return Err(format!("extra node: {:?}", rest));
     }
     Ok(node)
+}
+
+// <expr> ::= <add>
+fn parse_expr(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
+    parse_add(tokens)
 }
 
 // <add> ::= <mul> (("+" | "-") <mul>)*
@@ -52,9 +57,9 @@ fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
     Ok((node, rest))
 }
 
-// <mul> ::= <num> ("*" <num>)*
+// <mul> ::= <primary> ("*" <primary>)*
 fn parse_mul(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
-    let (mut node, mut rest) = parse_num(tokens)?;
+    let (mut node, mut rest) = parse_primary(tokens)?;
 
     while let Some(Token::Punct(punct_kind)) = rest.get(0) {
         match punct_kind {
@@ -64,7 +69,7 @@ fn parse_mul(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
 
         let lhs = node;
         let rhs;
-        (rhs, rest) = parse_num(&rest[1..])?;
+        (rhs, rest) = parse_primary(&rest[1..])?;
 
         let bin = Binary {
             lhs: Box::new(lhs),
@@ -80,13 +85,21 @@ fn parse_mul(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
     Ok((node, rest))
 }
 
-// <num> ::= number
-fn parse_num(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
-    if let Some(Token::Num(num)) = tokens.get(0) {
-        return Ok((Node::Num(*num), &tokens[1..]));
+// <primary> ::= "(" <expr> ")"
+//             | number
+fn parse_primary(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
+    match tokens.get(0).expect("expected some primary expression") {
+        Token::Punct(PunctKind::ParenL) => {
+            let (node, rest) = parse_expr(&tokens[1..])?;
+            if let Some(Token::Punct(PunctKind::ParenR)) = rest.get(0) {
+                Ok((node, &rest[1..]))
+            } else {
+                Err("expected terminated parenthesis".to_string())
+            }
+        }
+        Token::Num(num) => Ok((Node::Num(*num), &tokens[1..])),
+        _ => Err("failed to parse primary expression".to_string()),
     }
-
-    Err("failed to parse number".to_string())
 }
 
 #[cfg(test)]
@@ -201,6 +214,50 @@ mod tests {
                 })),
             })),
             rhs: Box::new(Node::Num(4)),
+        });
+        let actual = parse(&tokens).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn parses_expr_without_parenthesis() {
+        // 1+2*3
+        let tokens = vec![
+            Token::Num(1),
+            Token::Punct(PunctKind::Add),
+            Token::Num(2),
+            Token::Punct(PunctKind::Mul),
+            Token::Num(3),
+        ];
+        let expected = Node::Add(Binary {
+            lhs: Box::new(Node::Num(1)),
+            rhs: Box::new(Node::Mul(Binary {
+                lhs: Box::new(Node::Num(2)),
+                rhs: Box::new(Node::Num(3)),
+            })),
+        });
+        let actual = parse(&tokens).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn parses_expr_with_parenthesis() {
+        // (1+2)*3
+        let tokens = vec![
+            Token::Punct(PunctKind::ParenL),
+            Token::Num(1),
+            Token::Punct(PunctKind::Add),
+            Token::Num(2),
+            Token::Punct(PunctKind::ParenR),
+            Token::Punct(PunctKind::Mul),
+            Token::Num(3),
+        ];
+        let expected = Node::Mul(Binary {
+            lhs: Box::new(Node::Add(Binary {
+                lhs: Box::new(Node::Num(1)),
+                rhs: Box::new(Node::Num(2)),
+            })),
+            rhs: Box::new(Node::Num(3)),
         });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);

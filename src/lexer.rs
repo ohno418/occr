@@ -8,10 +8,12 @@ pub enum Token {
 // puctuator kind
 #[derive(Debug, PartialEq)]
 pub enum PunctKind {
-    Add, // +
-    Sub, // -
-    Mul, // *
-    Div, // /
+    Add,    // +
+    Sub,    // -
+    Mul,    // *
+    Div,    // /
+    ParenL, // (
+    ParenR, // )
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
@@ -60,6 +62,18 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
 
             if c == '/' {
                 tokens.push(Token::Punct(PunctKind::Div));
+                rest = &rest[1..];
+                continue;
+            }
+
+            if c == '(' {
+                tokens.push(Token::Punct(PunctKind::ParenL));
+                rest = &rest[1..];
+                continue;
+            }
+
+            if c == ')' {
+                tokens.push(Token::Punct(PunctKind::ParenR));
                 rest = &rest[1..];
                 continue;
             }
@@ -154,6 +168,22 @@ mod tests {
     fn tokenizes_div_expr() {
         let input = "9/3";
         let expected = vec![Token::Num(9), Token::Punct(PunctKind::Div), Token::Num(3)];
+        let actual = tokenize(input).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tokenizes_expr_with_parenthesis() {
+        let input = "(1+2)*3";
+        let expected = vec![
+            Token::Punct(PunctKind::ParenL),
+            Token::Num(1),
+            Token::Punct(PunctKind::Add),
+            Token::Num(2),
+            Token::Punct(PunctKind::ParenR),
+            Token::Punct(PunctKind::Mul),
+            Token::Num(3),
+        ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
