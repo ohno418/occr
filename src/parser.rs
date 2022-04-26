@@ -1,4 +1,4 @@
-use crate::lexer::{OpKind, Token};
+use crate::lexer::{PunctKind, Token};
 
 #[derive(Debug, PartialEq)]
 pub enum Node {
@@ -28,9 +28,9 @@ pub fn parse(tokens: &[Token]) -> Result<Node, String> {
 fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
     let (mut node, mut rest) = parse_mul(tokens)?;
 
-    while let Some(Token::Op(op_kind)) = rest.get(0) {
-        match op_kind {
-            OpKind::Add | OpKind::Sub => (),
+    while let Some(Token::Punct(punct_kind)) = rest.get(0) {
+        match punct_kind {
+            PunctKind::Add | PunctKind::Sub => (),
             _ => break,
         }
 
@@ -42,9 +42,9 @@ fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
         };
-        node = match op_kind {
-            OpKind::Add => Node::Add(bin),
-            OpKind::Sub => Node::Sub(bin),
+        node = match punct_kind {
+            PunctKind::Add => Node::Add(bin),
+            PunctKind::Sub => Node::Sub(bin),
             _ => unreachable!(),
         };
     }
@@ -56,9 +56,9 @@ fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
 fn parse_mul(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
     let (mut node, mut rest) = parse_num(tokens)?;
 
-    while let Some(Token::Op(op_kind)) = rest.get(0) {
-        match op_kind {
-            OpKind::Mul | OpKind::Div => (),
+    while let Some(Token::Punct(punct_kind)) = rest.get(0) {
+        match punct_kind {
+            PunctKind::Mul | PunctKind::Div => (),
             _ => break,
         }
 
@@ -70,9 +70,9 @@ fn parse_mul(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
         };
-        node = match op_kind {
-            OpKind::Mul => Node::Mul(bin),
-            OpKind::Div => Node::Div(bin),
+        node = match punct_kind {
+            PunctKind::Mul => Node::Mul(bin),
+            PunctKind::Div => Node::Div(bin),
             _ => unreachable!(),
         };
     }
@@ -103,7 +103,7 @@ mod tests {
 
     #[test]
     fn parses_add_expr() {
-        let tokens = vec![Token::Num(12), Token::Op(OpKind::Add), Token::Num(23)];
+        let tokens = vec![Token::Num(12), Token::Punct(PunctKind::Add), Token::Num(23)];
         let expected = Node::Add(Binary {
             lhs: Box::new(Node::Num(12)),
             rhs: Box::new(Node::Num(23)),
@@ -116,9 +116,9 @@ mod tests {
     fn parses_nested_add_expr() {
         let tokens = vec![
             Token::Num(12),
-            Token::Op(OpKind::Add),
+            Token::Punct(PunctKind::Add),
             Token::Num(23),
-            Token::Op(OpKind::Add),
+            Token::Punct(PunctKind::Add),
             Token::Num(34),
         ];
         let expected = Node::Add(Binary {
@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn parses_sub_expr() {
-        let tokens = vec![Token::Num(23), Token::Op(OpKind::Sub), Token::Num(12)];
+        let tokens = vec![Token::Num(23), Token::Punct(PunctKind::Sub), Token::Num(12)];
         let expected = Node::Sub(Binary {
             lhs: Box::new(Node::Num(23)),
             rhs: Box::new(Node::Num(12)),
@@ -145,7 +145,7 @@ mod tests {
 
     #[test]
     fn parses_mul_expr() {
-        let tokens = vec![Token::Num(2), Token::Op(OpKind::Mul), Token::Num(3)];
+        let tokens = vec![Token::Num(2), Token::Punct(PunctKind::Mul), Token::Num(3)];
         let expected = Node::Mul(Binary {
             lhs: Box::new(Node::Num(2)),
             rhs: Box::new(Node::Num(3)),
@@ -159,11 +159,11 @@ mod tests {
         // 1+2*3-4
         let tokens = vec![
             Token::Num(1),
-            Token::Op(OpKind::Add),
+            Token::Punct(PunctKind::Add),
             Token::Num(2),
-            Token::Op(OpKind::Mul),
+            Token::Punct(PunctKind::Mul),
             Token::Num(3),
-            Token::Op(OpKind::Sub),
+            Token::Punct(PunctKind::Sub),
             Token::Num(4),
         ];
         let expected = Node::Sub(Binary {
@@ -185,11 +185,11 @@ mod tests {
         // 1+3/2-4
         let tokens = vec![
             Token::Num(1),
-            Token::Op(OpKind::Add),
+            Token::Punct(PunctKind::Add),
             Token::Num(3),
-            Token::Op(OpKind::Div),
+            Token::Punct(PunctKind::Div),
             Token::Num(2),
-            Token::Op(OpKind::Sub),
+            Token::Punct(PunctKind::Sub),
             Token::Num(4),
         ];
         let expected = Node::Sub(Binary {

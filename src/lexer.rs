@@ -1,12 +1,13 @@
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Num(u64),
-    // operator
-    Op(OpKind),
+    // puctuator
+    Punct(PunctKind),
 }
 
+// puctuator kind
 #[derive(Debug, PartialEq)]
-pub enum OpKind {
+pub enum PunctKind {
     Add, // +
     Sub, // -
     Mul, // *
@@ -40,25 +41,25 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
         // operator
         if c.is_ascii_punctuation() {
             if c == '+' {
-                tokens.push(Token::Op(OpKind::Add));
+                tokens.push(Token::Punct(PunctKind::Add));
                 rest = &rest[1..];
                 continue;
             }
 
             if c == '-' {
-                tokens.push(Token::Op(OpKind::Sub));
+                tokens.push(Token::Punct(PunctKind::Sub));
                 rest = &rest[1..];
                 continue;
             }
 
             if c == '*' {
-                tokens.push(Token::Op(OpKind::Mul));
+                tokens.push(Token::Punct(PunctKind::Mul));
                 rest = &rest[1..];
                 continue;
             }
 
             if c == '/' {
-                tokens.push(Token::Op(OpKind::Div));
+                tokens.push(Token::Punct(PunctKind::Div));
                 rest = &rest[1..];
                 continue;
             }
@@ -128,7 +129,7 @@ mod tests {
     #[test]
     fn tokenizes_add_expr() {
         let input = "12+23";
-        let expected = vec![Token::Num(12), Token::Op(OpKind::Add), Token::Num(23)];
+        let expected = vec![Token::Num(12), Token::Punct(PunctKind::Add), Token::Num(23)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
@@ -136,7 +137,7 @@ mod tests {
     #[test]
     fn tokenizes_sub_expr() {
         let input = "23-12";
-        let expected = vec![Token::Num(23), Token::Op(OpKind::Sub), Token::Num(12)];
+        let expected = vec![Token::Num(23), Token::Punct(PunctKind::Sub), Token::Num(12)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
@@ -144,7 +145,7 @@ mod tests {
     #[test]
     fn tokenizes_mul_expr() {
         let input = "2*3";
-        let expected = vec![Token::Num(2), Token::Op(OpKind::Mul), Token::Num(3)];
+        let expected = vec![Token::Num(2), Token::Punct(PunctKind::Mul), Token::Num(3)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
@@ -152,7 +153,7 @@ mod tests {
     #[test]
     fn tokenizes_div_expr() {
         let input = "9/3";
-        let expected = vec![Token::Num(9), Token::Op(OpKind::Div), Token::Num(3)];
+        let expected = vec![Token::Num(9), Token::Punct(PunctKind::Div), Token::Num(3)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
