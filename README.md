@@ -1,4 +1,4 @@
-# Rocc
+# rocc
 A toy C compiler implementation written in Rust.
 
 # To run test
