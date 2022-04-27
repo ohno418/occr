@@ -1,6 +1,6 @@
-use crate::parser::{Binary, Node};
+use crate::parser::{Binary, Expr};
 
-pub fn gen(ast: &Node) -> String {
+pub fn gen(ast: &Expr) -> String {
     let mut asm = "    .intel_syntax noprefix
     .text
     .globl main
@@ -14,10 +14,10 @@ main:
     asm
 }
 
-fn gen_expr(ast: &Node) -> String {
+fn gen_expr(ast: &Expr) -> String {
     match ast {
-        Node::Num(n) => format!("    push {}\n", n),
-        Node::Add(Binary { lhs, rhs }) => {
+        Expr::Num(n) => format!("    push {}\n", n),
+        Expr::Add(Binary { lhs, rhs }) => {
             let mut s = gen_expr(lhs);
             s.push_str(&gen_expr(rhs));
             s.push_str("    pop rdi\n");
@@ -26,7 +26,7 @@ fn gen_expr(ast: &Node) -> String {
             s.push_str("    push rax\n");
             s
         }
-        Node::Sub(Binary { lhs, rhs }) => {
+        Expr::Sub(Binary { lhs, rhs }) => {
             let mut s = gen_expr(lhs);
             s.push_str(&gen_expr(rhs));
             s.push_str("    pop rdi\n");
@@ -35,7 +35,7 @@ fn gen_expr(ast: &Node) -> String {
             s.push_str("    push rax\n");
             s
         }
-        Node::Mul(Binary { lhs, rhs }) => {
+        Expr::Mul(Binary { lhs, rhs }) => {
             let mut s = gen_expr(lhs);
             s.push_str(&gen_expr(rhs));
             s.push_str("    pop rdi\n");
@@ -44,7 +44,7 @@ fn gen_expr(ast: &Node) -> String {
             s.push_str("    push rax\n");
             s
         }
-        Node::Div(Binary { lhs, rhs }) => {
+        Expr::Div(Binary { lhs, rhs }) => {
             let mut s = gen_expr(lhs);
             s.push_str(&gen_expr(rhs));
             s.push_str("    pop rdi\n");
@@ -63,7 +63,7 @@ mod tests {
 
     #[test]
     fn gen_single_num_node() {
-        let ast = Node::Num(42);
+        let ast = Expr::Num(42);
         let expected = "    .intel_syntax noprefix
     .text
     .globl main
@@ -81,9 +81,9 @@ main:
 
         #[test]
         fn gen_add_expr() {
-            let lhs = Node::Num(12);
-            let rhs = Node::Num(23);
-            let ast = Node::Add(Binary {
+            let lhs = Expr::Num(12);
+            let rhs = Expr::Num(23);
+            let ast = Expr::Add(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });
@@ -100,12 +100,12 @@ main:
 
         #[test]
         fn gen_nested_add_expr() {
-            let lhs = Node::Add(Binary {
-                lhs: Box::new(Node::Num(12)),
-                rhs: Box::new(Node::Num(23)),
+            let lhs = Expr::Add(Binary {
+                lhs: Box::new(Expr::Num(12)),
+                rhs: Box::new(Expr::Num(23)),
             });
-            let rhs = Node::Num(34);
-            let ast = Node::Add(Binary {
+            let rhs = Expr::Num(34);
+            let ast = Expr::Add(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });
@@ -127,9 +127,9 @@ main:
 
         #[test]
         fn gen_sub_expr() {
-            let lhs = Node::Num(23);
-            let rhs = Node::Num(12);
-            let ast = Node::Sub(Binary {
+            let lhs = Expr::Num(23);
+            let rhs = Expr::Num(12);
+            let ast = Expr::Sub(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });
@@ -146,9 +146,9 @@ main:
 
         #[test]
         fn gen_mul_expr() {
-            let lhs = Node::Num(2);
-            let rhs = Node::Num(3);
-            let ast = Node::Mul(Binary {
+            let lhs = Expr::Num(2);
+            let rhs = Expr::Num(3);
+            let ast = Expr::Mul(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });
@@ -165,9 +165,9 @@ main:
 
         #[test]
         fn gen_div_expr() {
-            let lhs = Node::Num(4);
-            let rhs = Node::Num(2);
-            let ast = Node::Div(Binary {
+            let lhs = Expr::Num(4);
+            let rhs = Expr::Num(2);
+            let ast = Expr::Div(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });

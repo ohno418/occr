@@ -1,7 +1,7 @@
 use crate::lexer::{PunctKind, Token};
 
 #[derive(Debug, PartialEq)]
-pub enum Node {
+pub enum Expr {
     Num(u64),
     Add(Binary), // +
     Sub(Binary), // -
@@ -11,12 +11,12 @@ pub enum Node {
 
 #[derive(Debug, PartialEq)]
 pub struct Binary {
-    pub lhs: Box<Node>,
-    pub rhs: Box<Node>,
+    pub lhs: Box<Expr>,
+    pub rhs: Box<Expr>,
 }
 
 // <program> ::= <expr>
-pub fn parse(tokens: &[Token]) -> Result<Node, String> {
+pub fn parse(tokens: &[Token]) -> Result<Expr, String> {
     let (node, rest) = parse_expr(tokens)?;
     if !rest.is_empty() {
         return Err(format!("extra node: {:?}", rest));
@@ -25,12 +25,12 @@ pub fn parse(tokens: &[Token]) -> Result<Node, String> {
 }
 
 // <expr> ::= <add>
-fn parse_expr(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
+fn parse_expr(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
     parse_add(tokens)
 }
 
 // <add> ::= <mul> (("+" | "-") <mul>)*
-fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
+fn parse_add(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
     let (mut node, mut rest) = parse_mul(tokens)?;
 
     while let Some(Token::Punct(punct_kind)) = rest.get(0) {
@@ -48,8 +48,8 @@ fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
             rhs: Box::new(rhs),
         };
         node = match punct_kind {
-            PunctKind::Add => Node::Add(bin),
-            PunctKind::Sub => Node::Sub(bin),
+            PunctKind::Add => Expr::Add(bin),
+            PunctKind::Sub => Expr::Sub(bin),
             _ => unreachable!(),
         };
     }
@@ -58,7 +58,7 @@ fn parse_add(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
 }
 
 // <mul> ::= <primary> ("*" <primary>)*
-fn parse_mul(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
+fn parse_mul(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
     let (mut node, mut rest) = parse_primary(tokens)?;
 
     while let Some(Token::Punct(punct_kind)) = rest.get(0) {
@@ -76,8 +76,8 @@ fn parse_mul(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
             rhs: Box::new(rhs),
         };
         node = match punct_kind {
-            PunctKind::Mul => Node::Mul(bin),
-            PunctKind::Div => Node::Div(bin),
+            PunctKind::Mul => Expr::Mul(bin),
+            PunctKind::Div => Expr::Div(bin),
             _ => unreachable!(),
         };
     }
@@ -87,7 +87,7 @@ fn parse_mul(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
 
 // <primary> ::= "(" <expr> ")"
 //             | number
-fn parse_primary(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
+fn parse_primary(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
     match tokens.get(0).expect("expected some primary expression") {
         Token::Punct(PunctKind::ParenL) => {
             let (node, rest) = parse_expr(&tokens[1..])?;
@@ -97,7 +97,7 @@ fn parse_primary(tokens: &[Token]) -> Result<(Node, &[Token]), String> {
                 Err("expected terminated parenthesis".to_string())
             }
         }
-        Token::Num(num) => Ok((Node::Num(*num), &tokens[1..])),
+        Token::Num(num) => Ok((Expr::Num(*num), &tokens[1..])),
         _ => Err("failed to parse primary expression".to_string()),
     }
 }
@@ -109,7 +109,7 @@ mod tests {
     #[test]
     fn parses_single_num_token() {
         let tokens = vec![Token::Num(42)];
-        let expected = Node::Num(42);
+        let expected = Expr::Num(42);
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
@@ -117,9 +117,9 @@ mod tests {
     #[test]
     fn parses_add_expr() {
         let tokens = vec![Token::Num(12), Token::Punct(PunctKind::Add), Token::Num(23)];
-        let expected = Node::Add(Binary {
-            lhs: Box::new(Node::Num(12)),
-            rhs: Box::new(Node::Num(23)),
+        let expected = Expr::Add(Binary {
+            lhs: Box::new(Expr::Num(12)),
+            rhs: Box::new(Expr::Num(23)),
         });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
@@ -134,12 +134,12 @@ mod tests {
             Token::Punct(PunctKind::Add),
             Token::Num(34),
         ];
-        let expected = Node::Add(Binary {
-            lhs: Box::new(Node::Add(Binary {
-                lhs: Box::new(Node::Num(12)),
-                rhs: Box::new(Node::Num(23)),
+        let expected = Expr::Add(Binary {
+            lhs: Box::new(Expr::Add(Binary {
+                lhs: Box::new(Expr::Num(12)),
+                rhs: Box::new(Expr::Num(23)),
             })),
-            rhs: Box::new(Node::Num(34)),
+            rhs: Box::new(Expr::Num(34)),
         });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
@@ -148,9 +148,9 @@ mod tests {
     #[test]
     fn parses_sub_expr() {
         let tokens = vec![Token::Num(23), Token::Punct(PunctKind::Sub), Token::Num(12)];
-        let expected = Node::Sub(Binary {
-            lhs: Box::new(Node::Num(23)),
-            rhs: Box::new(Node::Num(12)),
+        let expected = Expr::Sub(Binary {
+            lhs: Box::new(Expr::Num(23)),
+            rhs: Box::new(Expr::Num(12)),
         });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
@@ -159,9 +159,9 @@ mod tests {
     #[test]
     fn parses_mul_expr() {
         let tokens = vec![Token::Num(2), Token::Punct(PunctKind::Mul), Token::Num(3)];
-        let expected = Node::Mul(Binary {
-            lhs: Box::new(Node::Num(2)),
-            rhs: Box::new(Node::Num(3)),
+        let expected = Expr::Mul(Binary {
+            lhs: Box::new(Expr::Num(2)),
+            rhs: Box::new(Expr::Num(3)),
         });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
@@ -179,15 +179,15 @@ mod tests {
             Token::Punct(PunctKind::Sub),
             Token::Num(4),
         ];
-        let expected = Node::Sub(Binary {
-            lhs: Box::new(Node::Add(Binary {
-                lhs: Box::new(Node::Num(1)),
-                rhs: Box::new(Node::Mul(Binary {
-                    lhs: Box::new(Node::Num(2)),
-                    rhs: Box::new(Node::Num(3)),
+        let expected = Expr::Sub(Binary {
+            lhs: Box::new(Expr::Add(Binary {
+                lhs: Box::new(Expr::Num(1)),
+                rhs: Box::new(Expr::Mul(Binary {
+                    lhs: Box::new(Expr::Num(2)),
+                    rhs: Box::new(Expr::Num(3)),
                 })),
             })),
-            rhs: Box::new(Node::Num(4)),
+            rhs: Box::new(Expr::Num(4)),
         });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
@@ -205,15 +205,15 @@ mod tests {
             Token::Punct(PunctKind::Sub),
             Token::Num(4),
         ];
-        let expected = Node::Sub(Binary {
-            lhs: Box::new(Node::Add(Binary {
-                lhs: Box::new(Node::Num(1)),
-                rhs: Box::new(Node::Div(Binary {
-                    lhs: Box::new(Node::Num(3)),
-                    rhs: Box::new(Node::Num(2)),
+        let expected = Expr::Sub(Binary {
+            lhs: Box::new(Expr::Add(Binary {
+                lhs: Box::new(Expr::Num(1)),
+                rhs: Box::new(Expr::Div(Binary {
+                    lhs: Box::new(Expr::Num(3)),
+                    rhs: Box::new(Expr::Num(2)),
                 })),
             })),
-            rhs: Box::new(Node::Num(4)),
+            rhs: Box::new(Expr::Num(4)),
         });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
@@ -229,11 +229,11 @@ mod tests {
             Token::Punct(PunctKind::Mul),
             Token::Num(3),
         ];
-        let expected = Node::Add(Binary {
-            lhs: Box::new(Node::Num(1)),
-            rhs: Box::new(Node::Mul(Binary {
-                lhs: Box::new(Node::Num(2)),
-                rhs: Box::new(Node::Num(3)),
+        let expected = Expr::Add(Binary {
+            lhs: Box::new(Expr::Num(1)),
+            rhs: Box::new(Expr::Mul(Binary {
+                lhs: Box::new(Expr::Num(2)),
+                rhs: Box::new(Expr::Num(3)),
             })),
         });
         let actual = parse(&tokens).unwrap();
@@ -252,12 +252,12 @@ mod tests {
             Token::Punct(PunctKind::Mul),
             Token::Num(3),
         ];
-        let expected = Node::Mul(Binary {
-            lhs: Box::new(Node::Add(Binary {
-                lhs: Box::new(Node::Num(1)),
-                rhs: Box::new(Node::Num(2)),
+        let expected = Expr::Mul(Binary {
+            lhs: Box::new(Expr::Add(Binary {
+                lhs: Box::new(Expr::Num(1)),
+                rhs: Box::new(Expr::Num(2)),
             })),
-            rhs: Box::new(Node::Num(3)),
+            rhs: Box::new(Expr::Num(3)),
         });
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
