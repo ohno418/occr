@@ -1,6 +1,6 @@
-use crate::parser::{Binary, Expr};
+use crate::parser::{Binary, Expr, Stmt};
 
-pub fn gen(ast: &Expr) -> String {
+pub fn gen(ast: &Stmt) -> String {
     let mut asm = "    .intel_syntax noprefix
     .text
     .globl main
@@ -8,14 +8,23 @@ main:
 "
     .to_string();
 
-    asm.push_str(&gen_expr(ast));
-    asm.push_str("    pop rax\n");
+    asm.push_str(&gen_stmt(ast));
     asm.push_str("    ret\n");
     asm
 }
 
-fn gen_expr(ast: &Expr) -> String {
-    match ast {
+fn gen_stmt(stmt: &Stmt) -> String {
+    match stmt {
+        Stmt::ExprStmt(expr) => {
+            let mut asm = gen_expr(expr);
+            asm.push_str("    pop rax\n");
+            asm
+        },
+    }
+}
+
+fn gen_expr(expr: &Expr) -> String {
+    match expr {
         Expr::Num(n) => format!("    push {}\n", n),
         Expr::Add(Binary { lhs, rhs }) => {
             let mut s = gen_expr(lhs);
@@ -63,7 +72,7 @@ mod tests {
 
     #[test]
     fn gen_single_num_node() {
-        let ast = Expr::Num(42);
+        let ast = Stmt::ExprStmt(Expr::Num(42));
         let expected = "    .intel_syntax noprefix
     .text
     .globl main
@@ -83,7 +92,7 @@ main:
         fn gen_add_expr() {
             let lhs = Expr::Num(12);
             let rhs = Expr::Num(23);
-            let ast = Expr::Add(Binary {
+            let expr = Expr::Add(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });
@@ -94,7 +103,7 @@ main:
     add rax, rdi
     push rax
 ";
-            let actual = gen_expr(&ast);
+            let actual = gen_expr(&expr);
             assert_eq!(expected, actual);
         }
 
@@ -105,7 +114,7 @@ main:
                 rhs: Box::new(Expr::Num(23)),
             });
             let rhs = Expr::Num(34);
-            let ast = Expr::Add(Binary {
+            let expr = Expr::Add(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });
@@ -121,7 +130,7 @@ main:
     add rax, rdi
     push rax
 ";
-            let actual = gen_expr(&ast);
+            let actual = gen_expr(&expr);
             assert_eq!(expected, actual);
         }
 
@@ -129,7 +138,7 @@ main:
         fn gen_sub_expr() {
             let lhs = Expr::Num(23);
             let rhs = Expr::Num(12);
-            let ast = Expr::Sub(Binary {
+            let expr = Expr::Sub(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });
@@ -140,7 +149,7 @@ main:
     sub rax, rdi
     push rax
 ";
-            let actual = gen_expr(&ast);
+            let actual = gen_expr(&expr);
             assert_eq!(expected, actual);
         }
 
@@ -148,7 +157,7 @@ main:
         fn gen_mul_expr() {
             let lhs = Expr::Num(2);
             let rhs = Expr::Num(3);
-            let ast = Expr::Mul(Binary {
+            let expr = Expr::Mul(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });
@@ -159,7 +168,7 @@ main:
     imul rax, rdi
     push rax
 ";
-            let actual = gen_expr(&ast);
+            let actual = gen_expr(&expr);
             assert_eq!(expected, actual);
         }
 
@@ -167,7 +176,7 @@ main:
         fn gen_div_expr() {
             let lhs = Expr::Num(4);
             let rhs = Expr::Num(2);
-            let ast = Expr::Div(Binary {
+            let expr = Expr::Div(Binary {
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
             });
@@ -179,7 +188,7 @@ main:
     idiv rdi
     push rax
 ";
-            let actual = gen_expr(&ast);
+            let actual = gen_expr(&expr);
             assert_eq!(expected, actual);
         }
     }

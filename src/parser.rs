@@ -1,6 +1,11 @@
 use crate::lexer::{PunctKind, Token};
 
 #[derive(Debug, PartialEq)]
+pub enum Stmt {
+    ExprStmt(Expr), // expression statement
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expr {
     Num(u64),
     Add(Binary), // +
@@ -15,13 +20,24 @@ pub struct Binary {
     pub rhs: Box<Expr>,
 }
 
-// <program> ::= <expr>
-pub fn parse(tokens: &[Token]) -> Result<Expr, String> {
-    let (node, rest) = parse_expr(tokens)?;
+// <program> ::= <stmt>
+pub fn parse(tokens: &[Token]) -> Result<Stmt, String> {
+    let (node, rest) = parse_stmt(tokens)?;
     if !rest.is_empty() {
-        return Err(format!("extra node: {:?}", rest));
+        return Err(format!("extra token: {:?}", rest));
     }
     Ok(node)
+}
+
+// <stmt> ::= <expr> ";"
+fn parse_stmt(tokens: &[Token]) -> Result<(Stmt, &[Token]), String> {
+    let (expr, rest) = parse_expr(tokens)?;
+
+    if let Some(Token::Punct(PunctKind::Semicolon)) = rest.get(0) {
+        Ok((Stmt::ExprStmt(expr), &rest[1..]))
+    } else {
+        Err("expected semicolon".to_string())
+    }
 }
 
 // <expr> ::= <add>
@@ -108,19 +124,24 @@ mod tests {
 
     #[test]
     fn parses_single_num_token() {
-        let tokens = vec![Token::Num(42)];
-        let expected = Expr::Num(42);
+        let tokens = vec![Token::Num(42), Token::Punct(PunctKind::Semicolon)];
+        let expected = Stmt::ExprStmt(Expr::Num(42));
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn parses_add_expr() {
-        let tokens = vec![Token::Num(12), Token::Punct(PunctKind::Add), Token::Num(23)];
-        let expected = Expr::Add(Binary {
+        let tokens = vec![
+            Token::Num(12),
+            Token::Punct(PunctKind::Add),
+            Token::Num(23),
+            Token::Punct(PunctKind::Semicolon),
+        ];
+        let expected = Stmt::ExprStmt(Expr::Add(Binary {
             lhs: Box::new(Expr::Num(12)),
             rhs: Box::new(Expr::Num(23)),
-        });
+        }));
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
@@ -133,36 +154,47 @@ mod tests {
             Token::Num(23),
             Token::Punct(PunctKind::Add),
             Token::Num(34),
+            Token::Punct(PunctKind::Semicolon),
         ];
-        let expected = Expr::Add(Binary {
+        let expected = Stmt::ExprStmt(Expr::Add(Binary {
             lhs: Box::new(Expr::Add(Binary {
                 lhs: Box::new(Expr::Num(12)),
                 rhs: Box::new(Expr::Num(23)),
             })),
             rhs: Box::new(Expr::Num(34)),
-        });
+        }));
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn parses_sub_expr() {
-        let tokens = vec![Token::Num(23), Token::Punct(PunctKind::Sub), Token::Num(12)];
-        let expected = Expr::Sub(Binary {
+        let tokens = vec![
+            Token::Num(23),
+            Token::Punct(PunctKind::Sub),
+            Token::Num(12),
+            Token::Punct(PunctKind::Semicolon),
+        ];
+        let expected = Stmt::ExprStmt(Expr::Sub(Binary {
             lhs: Box::new(Expr::Num(23)),
             rhs: Box::new(Expr::Num(12)),
-        });
+        }));
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn parses_mul_expr() {
-        let tokens = vec![Token::Num(2), Token::Punct(PunctKind::Mul), Token::Num(3)];
-        let expected = Expr::Mul(Binary {
+        let tokens = vec![
+            Token::Num(2),
+            Token::Punct(PunctKind::Mul),
+            Token::Num(3),
+            Token::Punct(PunctKind::Semicolon),
+        ];
+        let expected = Stmt::ExprStmt(Expr::Mul(Binary {
             lhs: Box::new(Expr::Num(2)),
             rhs: Box::new(Expr::Num(3)),
-        });
+        }));
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
@@ -178,8 +210,9 @@ mod tests {
             Token::Num(3),
             Token::Punct(PunctKind::Sub),
             Token::Num(4),
+            Token::Punct(PunctKind::Semicolon),
         ];
-        let expected = Expr::Sub(Binary {
+        let expected = Stmt::ExprStmt(Expr::Sub(Binary {
             lhs: Box::new(Expr::Add(Binary {
                 lhs: Box::new(Expr::Num(1)),
                 rhs: Box::new(Expr::Mul(Binary {
@@ -188,7 +221,7 @@ mod tests {
                 })),
             })),
             rhs: Box::new(Expr::Num(4)),
-        });
+        }));
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
@@ -204,8 +237,9 @@ mod tests {
             Token::Num(2),
             Token::Punct(PunctKind::Sub),
             Token::Num(4),
+            Token::Punct(PunctKind::Semicolon),
         ];
-        let expected = Expr::Sub(Binary {
+        let expected = Stmt::ExprStmt(Expr::Sub(Binary {
             lhs: Box::new(Expr::Add(Binary {
                 lhs: Box::new(Expr::Num(1)),
                 rhs: Box::new(Expr::Div(Binary {
@@ -214,7 +248,7 @@ mod tests {
                 })),
             })),
             rhs: Box::new(Expr::Num(4)),
-        });
+        }));
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
@@ -228,14 +262,15 @@ mod tests {
             Token::Num(2),
             Token::Punct(PunctKind::Mul),
             Token::Num(3),
+            Token::Punct(PunctKind::Semicolon),
         ];
-        let expected = Expr::Add(Binary {
+        let expected = Stmt::ExprStmt(Expr::Add(Binary {
             lhs: Box::new(Expr::Num(1)),
             rhs: Box::new(Expr::Mul(Binary {
                 lhs: Box::new(Expr::Num(2)),
                 rhs: Box::new(Expr::Num(3)),
             })),
-        });
+        }));
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
@@ -251,21 +286,26 @@ mod tests {
             Token::Punct(PunctKind::ParenR),
             Token::Punct(PunctKind::Mul),
             Token::Num(3),
+            Token::Punct(PunctKind::Semicolon),
         ];
-        let expected = Expr::Mul(Binary {
+        let expected = Stmt::ExprStmt(Expr::Mul(Binary {
             lhs: Box::new(Expr::Add(Binary {
                 lhs: Box::new(Expr::Num(1)),
                 rhs: Box::new(Expr::Num(2)),
             })),
             rhs: Box::new(Expr::Num(3)),
-        });
+        }));
         let actual = parse(&tokens).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn cannot_parse_others() {
-        let tokens = vec![Token::Num(42), Token::Num(7)];
+        let tokens = vec![
+            Token::Num(42),
+            Token::Num(7),
+            Token::Punct(PunctKind::Semicolon),
+        ];
         assert!(parse(&tokens).is_err());
     }
 }

@@ -8,12 +8,13 @@ pub enum Token {
 // puctuator kind
 #[derive(Debug, PartialEq)]
 pub enum PunctKind {
-    Add,    // +
-    Sub,    // -
-    Mul,    // *
-    Div,    // /
-    ParenL, // (
-    ParenR, // )
+    Add,       // +
+    Sub,       // -
+    Mul,       // *
+    Div,       // /
+    ParenL,    // (
+    ParenR,    // )
+    Semicolon, // ;
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
@@ -78,6 +79,12 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
                 continue;
             }
 
+            if c == ';' {
+                tokens.push(Token::Punct(PunctKind::Semicolon));
+                rest = &rest[1..];
+                continue;
+            }
+
             return Err(format!("unknown punctuator: {}", c));
         }
 
@@ -118,63 +125,83 @@ mod tests {
 
     #[test]
     fn tokenizes_single_digit_number() {
-        let input = "2";
-        let expected = vec![Token::Num(2)];
+        let input = "2;";
+        let expected = vec![Token::Num(2), Token::Punct(PunctKind::Semicolon)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tokenizes_multi_digit_number() {
-        let input = "123";
-        let expected = vec![Token::Num(123)];
+        let input = "123;";
+        let expected = vec![Token::Num(123), Token::Punct(PunctKind::Semicolon)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tokenizes_with_spaces() {
-        let input = "  42 ";
-        let expected = vec![Token::Num(42)];
+        let input = "  42 ;";
+        let expected = vec![Token::Num(42), Token::Punct(PunctKind::Semicolon)];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tokenizes_add_expr() {
-        let input = "12+23";
-        let expected = vec![Token::Num(12), Token::Punct(PunctKind::Add), Token::Num(23)];
+        let input = "12+23;";
+        let expected = vec![
+            Token::Num(12),
+            Token::Punct(PunctKind::Add),
+            Token::Num(23),
+            Token::Punct(PunctKind::Semicolon),
+        ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tokenizes_sub_expr() {
-        let input = "23-12";
-        let expected = vec![Token::Num(23), Token::Punct(PunctKind::Sub), Token::Num(12)];
+        let input = "23-12;";
+        let expected = vec![
+            Token::Num(23),
+            Token::Punct(PunctKind::Sub),
+            Token::Num(12),
+            Token::Punct(PunctKind::Semicolon),
+        ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tokenizes_mul_expr() {
-        let input = "2*3";
-        let expected = vec![Token::Num(2), Token::Punct(PunctKind::Mul), Token::Num(3)];
+        let input = "2*3;";
+        let expected = vec![
+            Token::Num(2),
+            Token::Punct(PunctKind::Mul),
+            Token::Num(3),
+            Token::Punct(PunctKind::Semicolon),
+        ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tokenizes_div_expr() {
-        let input = "9/3";
-        let expected = vec![Token::Num(9), Token::Punct(PunctKind::Div), Token::Num(3)];
+        let input = "9/3;";
+        let expected = vec![
+            Token::Num(9),
+            Token::Punct(PunctKind::Div),
+            Token::Num(3),
+            Token::Punct(PunctKind::Semicolon),
+        ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn tokenizes_expr_with_parenthesis() {
-        let input = "(1+2)*3";
+        let input = "(1+2)*3;";
         let expected = vec![
             Token::Punct(PunctKind::ParenL),
             Token::Num(1),
@@ -183,6 +210,7 @@ mod tests {
             Token::Punct(PunctKind::ParenR),
             Token::Punct(PunctKind::Mul),
             Token::Num(3),
+            Token::Punct(PunctKind::Semicolon),
         ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
@@ -190,7 +218,7 @@ mod tests {
 
     #[test]
     fn cannot_tokenize_string() {
-        let input = " 42  hi";
+        let input = " 42  hi;";
         assert!(tokenize(input).is_err());
     }
 
