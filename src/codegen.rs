@@ -19,7 +19,7 @@ fn gen_stmt(stmt: &Stmt) -> String {
             let mut asm = gen_expr(expr);
             asm.push_str("    pop rax\n");
             asm
-        },
+        }
     }
 }
 
