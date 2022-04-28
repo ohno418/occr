@@ -2,19 +2,7 @@
 pub enum Token {
     Num(u64),
     // puctuator
-    Punct(PunctKind),
-}
-
-// puctuator kind
-#[derive(Debug, PartialEq)]
-pub enum PunctKind {
-    Add,       // +
-    Sub,       // -
-    Mul,       // *
-    Div,       // /
-    ParenL,    // (
-    ParenR,    // )
-    Semicolon, // ;
+    Punct(String),
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
@@ -43,49 +31,14 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
 
         // operator
         if c.is_ascii_punctuation() {
-            if c == '+' {
-                tokens.push(Token::Punct(PunctKind::Add));
-                rest = &rest[1..];
-                continue;
+            match c {
+                '+' | '-' | '*' | '/' | '(' | ')' | ';' => {
+                    tokens.push(Token::Punct(c.to_string()));
+                    rest = &rest[1..];
+                    continue;
+                }
+                _ => return Err(format!("unknown punctuator: {}", c)),
             }
-
-            if c == '-' {
-                tokens.push(Token::Punct(PunctKind::Sub));
-                rest = &rest[1..];
-                continue;
-            }
-
-            if c == '*' {
-                tokens.push(Token::Punct(PunctKind::Mul));
-                rest = &rest[1..];
-                continue;
-            }
-
-            if c == '/' {
-                tokens.push(Token::Punct(PunctKind::Div));
-                rest = &rest[1..];
-                continue;
-            }
-
-            if c == '(' {
-                tokens.push(Token::Punct(PunctKind::ParenL));
-                rest = &rest[1..];
-                continue;
-            }
-
-            if c == ')' {
-                tokens.push(Token::Punct(PunctKind::ParenR));
-                rest = &rest[1..];
-                continue;
-            }
-
-            if c == ';' {
-                tokens.push(Token::Punct(PunctKind::Semicolon));
-                rest = &rest[1..];
-                continue;
-            }
-
-            return Err(format!("unknown punctuator: {}", c));
         }
 
         return Err(format!("Failed to tokenize: {}", c));
@@ -126,7 +79,7 @@ mod tests {
     #[test]
     fn tokenizes_single_digit_number() {
         let input = "2;";
-        let expected = vec![Token::Num(2), Token::Punct(PunctKind::Semicolon)];
+        let expected = vec![Token::Num(2), Token::Punct(";".to_string())];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
@@ -134,7 +87,7 @@ mod tests {
     #[test]
     fn tokenizes_multi_digit_number() {
         let input = "123;";
-        let expected = vec![Token::Num(123), Token::Punct(PunctKind::Semicolon)];
+        let expected = vec![Token::Num(123), Token::Punct(";".to_string())];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
@@ -142,7 +95,7 @@ mod tests {
     #[test]
     fn tokenizes_with_spaces() {
         let input = "  42 ;";
-        let expected = vec![Token::Num(42), Token::Punct(PunctKind::Semicolon)];
+        let expected = vec![Token::Num(42), Token::Punct(";".to_string())];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
     }
@@ -152,9 +105,9 @@ mod tests {
         let input = "12+23;";
         let expected = vec![
             Token::Num(12),
-            Token::Punct(PunctKind::Add),
+            Token::Punct("+".to_string()),
             Token::Num(23),
-            Token::Punct(PunctKind::Semicolon),
+            Token::Punct(";".to_string()),
         ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
@@ -165,9 +118,9 @@ mod tests {
         let input = "23-12;";
         let expected = vec![
             Token::Num(23),
-            Token::Punct(PunctKind::Sub),
+            Token::Punct("-".to_string()),
             Token::Num(12),
-            Token::Punct(PunctKind::Semicolon),
+            Token::Punct(";".to_string()),
         ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
@@ -178,9 +131,9 @@ mod tests {
         let input = "2*3;";
         let expected = vec![
             Token::Num(2),
-            Token::Punct(PunctKind::Mul),
+            Token::Punct("*".to_string()),
             Token::Num(3),
-            Token::Punct(PunctKind::Semicolon),
+            Token::Punct(";".to_string()),
         ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
@@ -191,9 +144,9 @@ mod tests {
         let input = "9/3;";
         let expected = vec![
             Token::Num(9),
-            Token::Punct(PunctKind::Div),
+            Token::Punct("/".to_string()),
             Token::Num(3),
-            Token::Punct(PunctKind::Semicolon),
+            Token::Punct(";".to_string()),
         ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
@@ -203,14 +156,14 @@ mod tests {
     fn tokenizes_expr_with_parenthesis() {
         let input = "(1+2)*3;";
         let expected = vec![
-            Token::Punct(PunctKind::ParenL),
+            Token::Punct("(".to_string()),
             Token::Num(1),
-            Token::Punct(PunctKind::Add),
+            Token::Punct("+".to_string()),
             Token::Num(2),
-            Token::Punct(PunctKind::ParenR),
-            Token::Punct(PunctKind::Mul),
+            Token::Punct(")".to_string()),
+            Token::Punct("*".to_string()),
             Token::Num(3),
-            Token::Punct(PunctKind::Semicolon),
+            Token::Punct(";".to_string()),
         ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);

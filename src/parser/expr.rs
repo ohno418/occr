@@ -1,4 +1,4 @@
-use crate::lexer::{PunctKind, Token};
+use crate::lexer::Token;
 
 #[derive(Debug, PartialEq)]
 pub enum Expr {
@@ -24,10 +24,9 @@ pub fn parse_expr(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
 fn parse_add(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
     let (mut node, mut rest) = parse_mul(tokens)?;
 
-    while let Some(Token::Punct(punct_kind)) = rest.get(0) {
-        match punct_kind {
-            PunctKind::Add | PunctKind::Sub => (),
-            _ => break,
+    while let Some(Token::Punct(punct)) = rest.get(0) {
+        if punct != "+" && punct != "-" {
+            break;
         }
 
         let lhs = node;
@@ -38,10 +37,12 @@ fn parse_add(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
         };
-        node = match punct_kind {
-            PunctKind::Add => Expr::Add(bin),
-            PunctKind::Sub => Expr::Sub(bin),
-            _ => unreachable!(),
+        node = if punct == "+" {
+            Expr::Add(bin)
+        } else if punct == "-" {
+            Expr::Sub(bin)
+        } else {
+            unreachable!()
         };
     }
 
@@ -52,10 +53,9 @@ fn parse_add(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
 fn parse_mul(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
     let (mut node, mut rest) = parse_primary(tokens)?;
 
-    while let Some(Token::Punct(punct_kind)) = rest.get(0) {
-        match punct_kind {
-            PunctKind::Mul | PunctKind::Div => (),
-            _ => break,
+    while let Some(Token::Punct(punct)) = rest.get(0) {
+        if punct != "*" && punct != "/" {
+            break;
         }
 
         let lhs = node;
@@ -66,10 +66,12 @@ fn parse_mul(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
         };
-        node = match punct_kind {
-            PunctKind::Mul => Expr::Mul(bin),
-            PunctKind::Div => Expr::Div(bin),
-            _ => unreachable!(),
+        node = if punct == "*" {
+            Expr::Mul(bin)
+        } else if punct == "/" {
+            Expr::Div(bin)
+        } else {
+            unreachable!()
         };
     }
 
@@ -80,13 +82,14 @@ fn parse_mul(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
 //             | number
 fn parse_primary(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
     match tokens.get(0).expect("expected some primary expression") {
-        Token::Punct(PunctKind::ParenL) => {
+        Token::Punct(punct) if punct == "(" => {
             let (node, rest) = parse_expr(&tokens[1..])?;
-            if let Some(Token::Punct(PunctKind::ParenR)) = rest.get(0) {
-                Ok((node, &rest[1..]))
-            } else {
-                Err("expected terminated parenthesis".to_string())
+            if let Some(Token::Punct(punct)) = rest.get(0) {
+                if punct == ")" {
+                    return Ok((node, &rest[1..]));
+                }
             }
+            Err("expected terminated parenthesis".to_string())
         }
         Token::Num(num) => Ok((Expr::Num(*num), &tokens[1..])),
         _ => Err("failed to parse primary expression".to_string()),
