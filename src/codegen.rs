@@ -1,6 +1,6 @@
 use crate::parser::{Binary, Expr, Stmt};
 
-pub fn gen(ast: &Stmt) -> String {
+pub fn gen(ast: &[Stmt]) -> String {
     let mut asm = "    .intel_syntax noprefix
     .text
     .globl main
@@ -8,7 +8,9 @@ main:
 "
     .to_string();
 
-    asm.push_str(&gen_stmt(ast));
+    for stmt in ast {
+        asm.push_str(&gen_stmt(stmt));
+    }
     asm.push_str("    ret\n");
     asm
 }
@@ -71,12 +73,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn gen_single_num_node() {
-        let ast = Stmt::ExprStmt(Expr::Num(42));
+    fn gen_single_stmt() {
+        let ast = vec![Stmt::ExprStmt(Expr::Num(42))];
         let expected = "    .intel_syntax noprefix
     .text
     .globl main
 main:
+    push 42
+    pop rax
+    ret
+";
+        let actual = gen(&ast);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn gen_multiple_stmt() {
+        let ast = vec![Stmt::ExprStmt(Expr::Num(3)), Stmt::ExprStmt(Expr::Num(42))];
+        let expected = "    .intel_syntax noprefix
+    .text
+    .globl main
+main:
+    push 3
+    pop rax
     push 42
     pop rax
     ret
