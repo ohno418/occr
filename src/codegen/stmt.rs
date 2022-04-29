@@ -15,6 +15,17 @@ pub fn gen_stmt(stmt: &Stmt) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::parser::Expr;
+
+    #[test]
+    fn gen_expr_stmt() {
+        let ast = Stmt::ExprStmt(Expr::Num(42));
+        let expected = "    push 42
+    pop rax
+";
+        let actual = gen_stmt(&ast);
+        assert_eq!(expected, actual);
+    }
 
     #[test]
     fn gen_null_stmt() {
