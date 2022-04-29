@@ -1,3 +1,5 @@
+#!/bin/bash
+
 assert() {
   input="$1"
   expected="$2"
