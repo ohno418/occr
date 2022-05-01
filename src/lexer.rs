@@ -45,12 +45,12 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
 
         // identifier
         if c.is_ascii_alphabetic() {
-            let ident = match take_ident_from_start(rest) {
-                Some(ident) => ident,
+            let ident;
+            (ident, rest) = match take_ident_from_start(rest) {
+                Some((ident, rest)) => (ident, rest),
                 None => return Err("identifier not found".to_string()),
             };
             tokens.push(Token::Ident(ident.to_string()));
-            rest = &rest[ident.chars().count()..];
             continue;
         }
 
@@ -66,31 +66,32 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
 //   take_number_from_start("123hello") => Some(123, "hello")
 //   take_number_from_start("hello123") => None
 fn take_number_from_start<'a>(s: &'a str) -> Option<(u64, &'a str)> {
-    let mut num_str = "".to_string();
-    let mut chars = s.chars();
-    let mut rest = s;
-    loop {
-        if let Some(c) = chars.next() {
-            if c.is_ascii_digit() {
-                num_str.push(c);
-                rest = &rest[1..];
-                continue;
-            };
-        };
-        break;
+    let mut len = 0;
+    for c in s.chars() {
+        if c.is_ascii_digit() {
+            len += 1;
+        } else {
+            break;
+        }
     }
-    match num_str.parse() {
-        Ok(num) => Some((num, rest)),
-        Err(_) => None,
+
+    match len {
+        0 => None,
+        _ => Some((
+            (&s[..len])
+                .parse()
+                .expect(format!(r#"failed to parse "{}" into number"#, &s[..len]).as_str()),
+            &s[len..],
+        )),
     }
 }
 
-// Takes an identifier from the start of `s`.
+// Takes an ident from the start of `s`, and returns the rest of the str.
 //
 // e.g.
-//   take_ident_from_start("hello123") => Some("hello")
+//   take_ident_from_start("hello123") => Some(("hello", "123"))
 //   take_ident_from_start("123hello") => None
-fn take_ident_from_start<'a>(s: &'a str) -> Option<&'a str> {
+fn take_ident_from_start<'a>(s: &'a str) -> Option<(&'a str, &'a str)> {
     let mut len = 0;
     for c in s.chars() {
         if c.is_ascii_alphabetic() {
@@ -102,7 +103,7 @@ fn take_ident_from_start<'a>(s: &'a str) -> Option<&'a str> {
 
     match len {
         0 => None,
-        _ => Some(&s[0..len]),
+        _ => Some((&s[..len], &s[len..])),
     }
 }
 
@@ -241,7 +242,7 @@ mod tests {
         #[test]
         fn takes_identifier_from_the_start() {
             let s = "hello123";
-            assert_eq!(take_ident_from_start(s), Some("hello"));
+            assert_eq!(take_ident_from_start(s), Some(("hello", "123")));
         }
 
         #[test]
