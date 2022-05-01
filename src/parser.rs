@@ -3,8 +3,9 @@ mod func;
 mod stmt;
 
 use crate::lexer::Token;
-pub use expr::{Binary, Expr};
 use func::parse_func;
+
+pub use expr::{Binary, Expr};
 pub use func::Function;
 pub use stmt::Stmt;
 
