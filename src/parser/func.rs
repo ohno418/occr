@@ -3,20 +3,20 @@ use crate::lexer::Token;
 
 #[derive(Debug, PartialEq)]
 pub struct Function {
+    pub name: String,
     pub body: Vec<Stmt>,
 }
 
-// <function> ::= "main" "(" ")" "{" <stmt>* "}"
+// <function> ::= ident "(" ")" "{" <stmt>* "}"
 pub fn parse_func(tokens: &[Token]) -> Result<(Function, &[Token]), String> {
     let mut rest = &tokens[..];
 
     // name
-    if let Some(Token::Ident(fn_name)) = rest.get(0) {
-        if fn_name != "main" {
-            return Err(format!(r#"expected "main", but get {}"#, fn_name));
-        }
-        rest = &rest[1..];
-    }
+    let name = match rest.get(0) {
+        Some(Token::Ident(name)) => name.clone(),
+        _ => return Err(format!("expected a function name: {:?}", rest)),
+    };
+    rest = &rest[1..];
 
     if let Some(Token::Punct(p)) = rest.get(0) {
         if p != "(" {
@@ -52,7 +52,7 @@ pub fn parse_func(tokens: &[Token]) -> Result<(Function, &[Token]), String> {
         }
     }
 
-    Ok((Function { body }, rest))
+    Ok((Function { name, body }, rest))
 }
 
 #[cfg(test)]
@@ -73,6 +73,7 @@ mod tests {
             Token::Punct("}".to_string()),
         ];
         let expected = Function {
+            name: "main".to_string(),
             body: vec![Stmt::ExprStmt(Expr::Num(42))],
         };
         let (func, rest) = parse_func(&tokens).unwrap();
@@ -82,9 +83,9 @@ mod tests {
 
     #[test]
     fn parses_multiple_stmt() {
-        // main() { 2; 3; }
+        // hello() { 2; 3; }
         let tokens = vec![
-            Token::Ident("main".to_string()),
+            Token::Ident("hello".to_string()),
             Token::Punct("(".to_string()),
             Token::Punct(")".to_string()),
             Token::Punct("{".to_string()),
@@ -95,6 +96,7 @@ mod tests {
             Token::Punct("}".to_string()),
         ];
         let expected = Function {
+            name: "hello".to_string(),
             body: vec![Stmt::ExprStmt(Expr::Num(2)), Stmt::ExprStmt(Expr::Num(3))],
         };
         let (func, rest) = parse_func(&tokens).unwrap();

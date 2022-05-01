@@ -37,5 +37,6 @@ assert "main() { 1+2*3; }" "7"
 assert "main() { (1+2)*3; }" "9"
 assert "main() { 1; 2; 3; }" "3"
 assert "main() { ; 3; }" "3"
+assert "ret() { 42; } main() { 123; }" "123"
 
 echo OK
