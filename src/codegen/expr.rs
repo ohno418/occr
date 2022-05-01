@@ -48,6 +48,15 @@ mod tests {
     use super::*;
 
     #[test]
+    fn gen_num() {
+        let expr = Expr::Num(42);
+        let expected = "    push 42
+";
+        let actual = gen_expr(&expr);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn gen_add_expr() {
         let lhs = Expr::Num(12);
         let rhs = Expr::Num(23);
