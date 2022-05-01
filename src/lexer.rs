@@ -54,7 +54,7 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
             continue;
         }
 
-        return Err(format!("Failed to tokenize: {}", c));
+        return Err(format!("unexpected input: {}", rest));
     }
 
     Ok(tokens)
