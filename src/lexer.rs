@@ -3,6 +3,8 @@ pub enum Token {
     Num(u64),
     // puctuator
     Punct(String),
+    // identifier
+    Ident(String),
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
@@ -32,13 +34,24 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
         // operator
         if c.is_ascii_punctuation() {
             match c {
-                '+' | '-' | '*' | '/' | '(' | ')' | ';' => {
+                '+' | '-' | '*' | '/' | '(' | ')' | '{' | '}' | ';' => {
                     tokens.push(Token::Punct(c.to_string()));
                     rest = &rest[1..];
                     continue;
                 }
                 _ => return Err(format!("unknown punctuator: {}", c)),
             }
+        }
+
+        // identifier
+        if c.is_ascii_alphabetic() {
+            let ident = match take_ident_from_start(rest) {
+                Some(ident) => ident,
+                None => return Err("identifier not found".to_string()),
+            };
+            tokens.push(Token::Ident(ident.to_string()));
+            rest = &rest[ident.chars().count()..];
+            continue;
         }
 
         return Err(format!("Failed to tokenize: {}", c));
@@ -69,6 +82,27 @@ fn take_number_from_start<'a>(s: &'a str) -> Option<(u64, &'a str)> {
     match num_str.parse() {
         Ok(num) => Some((num, rest)),
         Err(_) => None,
+    }
+}
+
+// Takes an identifier from the start of `s`.
+//
+// e.g.
+//   take_ident_from_start("hello123") => Some("hello")
+//   take_ident_from_start("123hello") => None
+fn take_ident_from_start<'a>(s: &'a str) -> Option<&'a str> {
+    let mut len = 0;
+    for c in s.chars() {
+        if c.is_ascii_alphabetic() {
+            len += 1;
+        } else {
+            break;
+        }
+    }
+
+    match len {
+        0 => None,
+        _ => Some(&s[0..len]),
     }
 }
 
@@ -170,12 +204,22 @@ mod tests {
     }
 
     #[test]
-    fn cannot_tokenize_string() {
-        let input = " 42  hi;";
-        assert!(tokenize(input).is_err());
+    fn tokenizes_with_identifier() {
+        let input = "main() { 42; }";
+        let expected = vec![
+            Token::Ident("main".to_string()),
+            Token::Punct("(".to_string()),
+            Token::Punct(")".to_string()),
+            Token::Punct("{".to_string()),
+            Token::Num(42),
+            Token::Punct(";".to_string()),
+            Token::Punct("}".to_string()),
+        ];
+        let actual = tokenize(input).unwrap();
+        assert_eq!(expected, actual);
     }
 
-    mod tests_take_number_from {
+    mod tests_take_number_from_start {
         use super::take_number_from_start;
 
         #[test]
@@ -188,6 +232,22 @@ mod tests {
         fn returns_none_for_not_starting_with_number() {
             let s = "hello123";
             assert_eq!(take_number_from_start(s), None);
+        }
+    }
+
+    mod tests_take_ident_from_start {
+        use super::take_ident_from_start;
+
+        #[test]
+        fn takes_identifier_from_the_start() {
+            let s = "hello123";
+            assert_eq!(take_ident_from_start(s), Some("hello"));
+        }
+
+        #[test]
+        fn returns_none_for_not_starting_with_identifier() {
+            let s = "123hello";
+            assert_eq!(take_ident_from_start(s), None);
         }
     }
 }
