@@ -62,6 +62,7 @@ mod tests {
 
     #[test]
     fn parses_main_function() {
+        // main() { 42; }
         let tokens = vec![
             Token::Ident("main".to_string()),
             Token::Punct("(".to_string()),
@@ -81,6 +82,7 @@ mod tests {
 
     #[test]
     fn parses_multiple_stmt() {
+        // main() { 2; 3; }
         let tokens = vec![
             Token::Ident("main".to_string()),
             Token::Punct("(".to_string()),
