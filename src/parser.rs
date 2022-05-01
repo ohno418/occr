@@ -11,7 +11,7 @@ pub struct Function {
     pub body: Vec<Stmt>,
 }
 
-// <program> ::= <function>*
+// <program> ::= <function>
 pub fn parse(tokens: &[Token]) -> Result<Function, String> {
     let (func, rest) = parse_func(tokens)?;
 
