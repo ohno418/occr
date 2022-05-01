@@ -22,7 +22,7 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
         }
 
         // number
-        if c.is_digit(10) {
+        if c.is_ascii_digit() {
             let num;
             (num, rest) = take_number_from_start(&rest).expect("failed to take number");
             tokens.push(Token::Num(num));
@@ -58,7 +58,7 @@ fn take_number_from_start<'a>(s: &'a str) -> Option<(u64, &'a str)> {
     let mut rest = s;
     loop {
         if let Some(c) = chars.next() {
-            if c.is_digit(10) {
+            if c.is_ascii_digit() {
                 num_str.push(c);
                 rest = &rest[1..];
                 continue;
