@@ -40,6 +40,12 @@ pub fn gen_expr(expr: &Expr) -> String {
             s.push_str("    push rax\n");
             s
         }
+        Expr::FnName(_fn_name) => {
+            todo!();
+        }
+        Expr::FnCall(_f) => {
+            todo!();
+        }
     }
 }
 
