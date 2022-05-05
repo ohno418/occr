@@ -43,8 +43,14 @@ pub fn gen_expr(expr: &Expr) -> Result<String, String> {
         Expr::FnName(fn_name) => {
             Err(format!("cannot generate a function: {}", fn_name))
         }
-        Expr::FnCall(_f) => {
-            todo!();
+        Expr::FnCall(f) => {
+            let fn_name = match &**f {
+                Expr::FnName(fn_name) => fn_name,
+                _ => return Err("todo".to_string()),
+            };
+            let mut s = format!("    call {}\n", fn_name);
+            s.push_str("    push rax\n");
+            Ok(s)
         }
     }
 }
@@ -170,5 +176,15 @@ mod tests {
     fn cannot_gen_function_name() {
         let expr = Expr::FnName("some_func".to_string());
         assert!(gen_expr(&expr).is_err());
+    }
+
+    #[test]
+    fn gen_function_call() {
+        let expr = Expr::FnCall(Box::new(Expr::FnName("some_func".to_string())));
+        let expected = "    call some_func
+    push rax
+";
+        let actual = gen_expr(&expr).unwrap();
+        assert_eq!(expected, actual);
     }
 }
