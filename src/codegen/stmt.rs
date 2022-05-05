@@ -1,14 +1,14 @@
 use super::expr::gen_expr;
 use crate::parser::Stmt;
 
-pub fn gen_stmt(stmt: &Stmt) -> String {
+pub fn gen_stmt(stmt: &Stmt) -> Result<String, String> {
     match stmt {
         Stmt::ExprStmt(expr) => {
-            let mut asm = gen_expr(expr);
+            let mut asm = gen_expr(expr)?;
             asm.push_str("    pop rax\n");
-            asm
+            Ok(asm)
         }
-        Stmt::NullStmt => "".to_string(),
+        Stmt::NullStmt => Ok("".to_string()),
     }
 }
 
@@ -23,7 +23,7 @@ mod tests {
         let expected = "    push 42
     pop rax
 ";
-        let actual = gen_stmt(&ast);
+        let actual = gen_stmt(&ast).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -31,7 +31,7 @@ mod tests {
     fn gen_null_stmt() {
         let ast = Stmt::NullStmt;
         let expected = "";
-        let actual = gen_stmt(&ast);
+        let actual = gen_stmt(&ast).unwrap();
         assert_eq!(expected, actual);
     }
 }

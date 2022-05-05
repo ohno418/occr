@@ -4,7 +4,7 @@ mod stmt;
 use crate::parser::Function;
 use stmt::gen_stmt;
 
-pub fn gen(ast: &[Function]) -> String {
+pub fn gen(ast: &[Function]) -> Result<String, String> {
     let mut asm = "    .intel_syntax noprefix
     .text
     .globl main
@@ -14,11 +14,11 @@ pub fn gen(ast: &[Function]) -> String {
     for func in ast {
         asm.push_str(&format!("{}:\n", func.name));
         for stmt in &func.body {
-            asm.push_str(&gen_stmt(&stmt));
+            asm.push_str(&gen_stmt(&stmt)?);
         }
         asm.push_str("    ret\n");
     }
-    asm
+    Ok(asm)
 }
 
 #[cfg(test)]
@@ -40,7 +40,7 @@ main:
     pop rax
     ret
 ";
-        let actual = gen(&ast);
+        let actual = gen(&ast).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -60,7 +60,7 @@ main:
     pop rax
     ret
 ";
-        let actual = gen(&ast);
+        let actual = gen(&ast).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -89,7 +89,7 @@ main:
     pop rax
     ret
 ";
-        let actual = gen(&ast);
+        let actual = gen(&ast).unwrap();
         assert_eq!(expected, actual);
     }
 }

@@ -1,47 +1,47 @@
 use crate::parser::{Binary, Expr};
 
-pub fn gen_expr(expr: &Expr) -> String {
+pub fn gen_expr(expr: &Expr) -> Result<String, String> {
     match expr {
-        Expr::Num(n) => format!("    push {}\n", n),
+        Expr::Num(n) => Ok(format!("    push {}\n", n)),
         Expr::Add(Binary { lhs, rhs }) => {
-            let mut s = gen_expr(lhs);
-            s.push_str(&gen_expr(rhs));
+            let mut s = gen_expr(lhs)?;
+            s.push_str(&gen_expr(rhs)?);
             s.push_str("    pop rdi\n");
             s.push_str("    pop rax\n");
             s.push_str("    add rax, rdi\n");
             s.push_str("    push rax\n");
-            s
+            Ok(s)
         }
         Expr::Sub(Binary { lhs, rhs }) => {
-            let mut s = gen_expr(lhs);
-            s.push_str(&gen_expr(rhs));
+            let mut s = gen_expr(lhs)?;
+            s.push_str(&gen_expr(rhs)?);
             s.push_str("    pop rdi\n");
             s.push_str("    pop rax\n");
             s.push_str("    sub rax, rdi\n");
             s.push_str("    push rax\n");
-            s
+            Ok(s)
         }
         Expr::Mul(Binary { lhs, rhs }) => {
-            let mut s = gen_expr(lhs);
-            s.push_str(&gen_expr(rhs));
+            let mut s = gen_expr(lhs)?;
+            s.push_str(&gen_expr(rhs)?);
             s.push_str("    pop rdi\n");
             s.push_str("    pop rax\n");
             s.push_str("    imul rax, rdi\n");
             s.push_str("    push rax\n");
-            s
+            Ok(s)
         }
         Expr::Div(Binary { lhs, rhs }) => {
-            let mut s = gen_expr(lhs);
-            s.push_str(&gen_expr(rhs));
+            let mut s = gen_expr(lhs)?;
+            s.push_str(&gen_expr(rhs)?);
             s.push_str("    pop rdi\n");
             s.push_str("    pop rax\n");
             s.push_str("    xor rdx, rdx\n");
             s.push_str("    idiv rdi\n");
             s.push_str("    push rax\n");
-            s
+            Ok(s)
         }
-        Expr::FnName(_fn_name) => {
-            todo!();
+        Expr::FnName(fn_name) => {
+            Err(format!("cannot generate a function: {}", fn_name))
         }
         Expr::FnCall(_f) => {
             todo!();
@@ -58,7 +58,7 @@ mod tests {
         let expr = Expr::Num(42);
         let expected = "    push 42
 ";
-        let actual = gen_expr(&expr);
+        let actual = gen_expr(&expr).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -77,7 +77,7 @@ mod tests {
     add rax, rdi
     push rax
 ";
-        let actual = gen_expr(&expr);
+        let actual = gen_expr(&expr).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -104,7 +104,7 @@ mod tests {
     add rax, rdi
     push rax
 ";
-        let actual = gen_expr(&expr);
+        let actual = gen_expr(&expr).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -123,7 +123,7 @@ mod tests {
     sub rax, rdi
     push rax
 ";
-        let actual = gen_expr(&expr);
+        let actual = gen_expr(&expr).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -142,7 +142,7 @@ mod tests {
     imul rax, rdi
     push rax
 ";
-        let actual = gen_expr(&expr);
+        let actual = gen_expr(&expr).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -162,7 +162,13 @@ mod tests {
     idiv rdi
     push rax
 ";
-        let actual = gen_expr(&expr);
+        let actual = gen_expr(&expr).unwrap();
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn cannot_gen_function_name() {
+        let expr = Expr::FnName("some_func".to_string());
+        assert!(gen_expr(&expr).is_err());
     }
 }
