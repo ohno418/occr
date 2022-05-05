@@ -115,7 +115,10 @@ fn parse_primary(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
             Err("expected terminated parenthesis".to_string())
         }
         // function name
-        Token::Ident(ident) => Ok((Expr::FnName(ident.clone()), &tokens[1..])),
+        Token::Ident(ident) => {
+            // TODO: Check if the function exists.
+            Ok((Expr::FnName(ident.clone()), &tokens[1..]))
+        }
         // number
         Token::Num(num) => Ok((Expr::Num(*num), &tokens[1..])),
         _ => Err("failed to parse primary expression".to_string()),
