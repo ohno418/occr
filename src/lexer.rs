@@ -5,6 +5,14 @@ pub enum Token {
     Punct(String),
     // identifier
     Ident(String),
+    // keyword
+    Kw(KwKind),
+}
+
+// keyword kind
+#[derive(Debug, PartialEq)]
+pub enum KwKind {
+    Return, // return
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
@@ -43,14 +51,18 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
             }
         }
 
-        // identifier
+        // keyword or identifier
         if c.is_ascii_alphabetic() {
             let ident;
             (ident, rest) = match take_ident_from_start(rest) {
                 Some((ident, rest)) => (ident, rest),
                 None => return Err("identifier not found".to_string()),
             };
-            tokens.push(Token::Ident(ident.to_string()));
+            let tok = match ident {
+                "return" => Token::Kw(KwKind::Return),
+                _ => Token::Ident(ident.to_string()),
+            };
+            tokens.push(tok);
             continue;
         }
 
@@ -212,6 +224,23 @@ mod tests {
             Token::Punct("(".to_string()),
             Token::Punct(")".to_string()),
             Token::Punct("{".to_string()),
+            Token::Num(42),
+            Token::Punct(";".to_string()),
+            Token::Punct("}".to_string()),
+        ];
+        let actual = tokenize(input).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tokenizes_return_stmt() {
+        let input = "main() { return 42; }";
+        let expected = vec![
+            Token::Ident("main".to_string()),
+            Token::Punct("(".to_string()),
+            Token::Punct(")".to_string()),
+            Token::Punct("{".to_string()),
+            Token::Kw(KwKind::Return),
             Token::Num(42),
             Token::Punct(";".to_string()),
             Token::Punct("}".to_string()),

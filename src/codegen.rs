@@ -12,10 +12,13 @@ pub fn gen(ast: &[Function]) -> Result<String, String> {
     .to_string();
 
     for func in ast {
+        let return_label = format!(".d.{}.return", func.name);
+
         asm.push_str(&format!("{}:\n", func.name));
         for stmt in &func.body {
-            asm.push_str(&gen_stmt(&stmt)?);
+            asm.push_str(&gen_stmt(&stmt, &return_label)?);
         }
+        asm.push_str(format!("{}:\n", return_label).as_str());
         asm.push_str("    ret\n");
     }
     Ok(asm)
@@ -38,6 +41,7 @@ mod tests {
 main:
     push 42
     pop rax
+.d.main.return:
     ret
 ";
         let actual = gen(&ast).unwrap();
@@ -58,6 +62,7 @@ main:
     pop rax
     push 42
     pop rax
+.d.main.return:
     ret
 ";
         let actual = gen(&ast).unwrap();
@@ -83,10 +88,12 @@ main:
 ret:
     push 42
     pop rax
+.d.ret.return:
     ret
 main:
     push 123
     pop rax
+.d.main.return:
     ret
 ";
         let actual = gen(&ast).unwrap();
