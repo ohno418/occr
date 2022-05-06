@@ -217,23 +217,7 @@ mod tests {
     }
 
     #[test]
-    fn tokenizes_with_identifier() {
-        let input = "main() { 42; }";
-        let expected = vec![
-            Token::Ident("main".to_string()),
-            Token::Punct("(".to_string()),
-            Token::Punct(")".to_string()),
-            Token::Punct("{".to_string()),
-            Token::Num(42),
-            Token::Punct(";".to_string()),
-            Token::Punct("}".to_string()),
-        ];
-        let actual = tokenize(input).unwrap();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn tokenizes_return_stmt() {
+    fn tokenizes_function_with_return_stmt() {
         let input = "main() { return 42; }";
         let expected = vec![
             Token::Ident("main".to_string()),

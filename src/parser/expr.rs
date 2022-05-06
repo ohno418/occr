@@ -130,6 +130,31 @@ mod tests {
     use super::*;
 
     #[test]
+    fn parses_single_num_token() {
+        let tokens = vec![Token::Num(42)];
+        let expected = Expr::Num(42);
+        let (actual, rest) = parse_expr(&tokens).unwrap();
+        assert_eq!(expected, actual);
+        assert_eq!(Vec::<Token>::new(), rest);
+    }
+
+    #[test]
+    fn parses_add_expr() {
+        let tokens = vec![
+            Token::Num(12),
+            Token::Punct("+".to_string()),
+            Token::Num(23),
+        ];
+        let expected = Expr::Add(Binary {
+            lhs: Box::new(Expr::Num(12)),
+            rhs: Box::new(Expr::Num(23)),
+        });
+        let (actual, rest) = parse_expr(&tokens).unwrap();
+        assert_eq!(expected, actual);
+        assert_eq!(Vec::<Token>::new(), rest);
+    }
+
+    #[test]
     fn parses_function_call() {
         let tokens = vec![
             Token::Ident("somefunc".to_string()),
@@ -139,6 +164,159 @@ mod tests {
         let expected = Expr::FnCall(Box::new(Expr::FnName("somefunc".to_string())));
         let (expr, rest) = parse_expr(&tokens).unwrap();
         assert_eq!(expected, expr);
+        assert_eq!(Vec::<Token>::new(), rest);
+    }
+
+    #[test]
+    fn parses_nested_add_expr() {
+        let tokens = vec![
+            Token::Num(12),
+            Token::Punct("+".to_string()),
+            Token::Num(23),
+            Token::Punct("+".to_string()),
+            Token::Num(34),
+        ];
+        let expected = Expr::Add(Binary {
+            lhs: Box::new(Expr::Add(Binary {
+                lhs: Box::new(Expr::Num(12)),
+                rhs: Box::new(Expr::Num(23)),
+            })),
+            rhs: Box::new(Expr::Num(34)),
+        });
+        let (actual, rest) = parse_expr(&tokens).unwrap();
+        assert_eq!(expected, actual);
+        assert_eq!(Vec::<Token>::new(), rest);
+    }
+
+    #[test]
+    fn parses_sub_expr() {
+        let tokens = vec![
+            Token::Num(23),
+            Token::Punct("-".to_string()),
+            Token::Num(12),
+        ];
+        let expected = Expr::Sub(Binary {
+            lhs: Box::new(Expr::Num(23)),
+            rhs: Box::new(Expr::Num(12)),
+        });
+        let (actual, rest) = parse_expr(&tokens).unwrap();
+        assert_eq!(expected, actual);
+        assert_eq!(Vec::<Token>::new(), rest);
+    }
+
+    #[test]
+    fn parses_mul_expr() {
+        let tokens = vec![
+            Token::Num(2),
+            Token::Punct("*".to_string()),
+            Token::Num(3),
+        ];
+        let expected = Expr::Mul(Binary {
+            lhs: Box::new(Expr::Num(2)),
+            rhs: Box::new(Expr::Num(3)),
+        });
+        let (actual, rest) = parse_expr(&tokens).unwrap();
+        assert_eq!(expected, actual);
+        assert_eq!(Vec::<Token>::new(), rest);
+    }
+
+    #[test]
+    fn parses_mul_expr_with_add() {
+        // 1+2*3-4
+        let tokens = vec![
+            Token::Num(1),
+            Token::Punct("+".to_string()),
+            Token::Num(2),
+            Token::Punct("*".to_string()),
+            Token::Num(3),
+            Token::Punct("-".to_string()),
+            Token::Num(4),
+        ];
+        let expected = Expr::Sub(Binary {
+            lhs: Box::new(Expr::Add(Binary {
+                lhs: Box::new(Expr::Num(1)),
+                rhs: Box::new(Expr::Mul(Binary {
+                    lhs: Box::new(Expr::Num(2)),
+                    rhs: Box::new(Expr::Num(3)),
+                })),
+            })),
+            rhs: Box::new(Expr::Num(4)),
+        });
+        let (actual, rest) = parse_expr(&tokens).unwrap();
+        assert_eq!(expected, actual);
+        assert_eq!(Vec::<Token>::new(), rest);
+    }
+
+    #[test]
+    fn parses_div_expr_with_add() {
+        // 1+3/2-4
+        let tokens = vec![
+            Token::Num(1),
+            Token::Punct("+".to_string()),
+            Token::Num(3),
+            Token::Punct("/".to_string()),
+            Token::Num(2),
+            Token::Punct("-".to_string()),
+            Token::Num(4),
+        ];
+        let expected = Expr::Sub(Binary {
+            lhs: Box::new(Expr::Add(Binary {
+                lhs: Box::new(Expr::Num(1)),
+                rhs: Box::new(Expr::Div(Binary {
+                    lhs: Box::new(Expr::Num(3)),
+                    rhs: Box::new(Expr::Num(2)),
+                })),
+            })),
+            rhs: Box::new(Expr::Num(4)),
+        });
+        let (actual, rest) = parse_expr(&tokens).unwrap();
+        assert_eq!(expected, actual);
+        assert_eq!(Vec::<Token>::new(), rest);
+    }
+
+    #[test]
+    fn parses_expr_without_parenthesis() {
+        // 1+2*3
+        let tokens = vec![
+            Token::Num(1),
+            Token::Punct("+".to_string()),
+            Token::Num(2),
+            Token::Punct("*".to_string()),
+            Token::Num(3),
+        ];
+        let expected = Expr::Add(Binary {
+            lhs: Box::new(Expr::Num(1)),
+            rhs: Box::new(Expr::Mul(Binary {
+                lhs: Box::new(Expr::Num(2)),
+                rhs: Box::new(Expr::Num(3)),
+            })),
+        });
+        let (actual, rest) = parse_expr(&tokens).unwrap();
+        assert_eq!(expected, actual);
+        assert_eq!(Vec::<Token>::new(), rest);
+    }
+
+    #[test]
+    fn parses_expr_with_parenthesis() {
+        // (1+2)*3
+        let tokens = vec![
+            Token::Punct("(".to_string()),
+            Token::Num(1),
+            Token::Punct("+".to_string()),
+            Token::Num(2),
+            Token::Punct(")".to_string()),
+            Token::Punct("*".to_string()),
+            Token::Num(3),
+        ];
+        let expected = Expr::Mul(Binary {
+            lhs: Box::new(Expr::Add(Binary {
+                lhs: Box::new(Expr::Num(1)),
+                rhs: Box::new(Expr::Num(2)),
+            })),
+            rhs: Box::new(Expr::Num(3)),
+        });
+        let (actual, rest) = parse_expr(&tokens).unwrap();
+        assert_eq!(expected, actual);
         assert_eq!(Vec::<Token>::new(), rest);
     }
 }
