@@ -14,6 +14,13 @@ pub fn gen_stmt(stmt: &Stmt, return_label: &str) -> Result<String, String> {
             asm.push_str(format!("    jmp {}\n", return_label).as_str());
             Ok(asm)
         }
+        Stmt::CompStmt(stmts) => {
+            let mut asm = "".to_string();
+            for stmt in stmts {
+                asm.push_str(gen_stmt(stmt, return_label)?.as_str());
+            }
+            Ok(asm)
+        }
         Stmt::NullStmt => Ok("".to_string()),
     }
 }
@@ -41,6 +48,21 @@ mod tests {
     jmp some_label
 ";
         let actual = gen_stmt(&ast, "some_label").unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn gen_compound_stmt() {
+        let ast = Stmt::CompStmt(vec![
+            Stmt::ExprStmt(Expr::Num(2)),
+            Stmt::ExprStmt(Expr::Num(3)),
+        ]);
+        let expected = "    push 2
+    pop rax
+    push 3
+    pop rax
+";
+        let actual = gen_stmt(&ast, ".d.main.return").unwrap();
         assert_eq!(expected, actual);
     }
 

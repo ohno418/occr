@@ -40,5 +40,6 @@ assert "ret() { return 42; } main() { return 123; }" "123"
 assert "ret() { return 42; } main() { return ret(); }" "42"
 assert "main() { 1; return 2; 3; }" "2"
 assert "main() { 1; return 2; return 3; }" "2"
+assert "main() { 1; { 2; 3; return 4; } return 5; }" "4"
 
 echo OK
