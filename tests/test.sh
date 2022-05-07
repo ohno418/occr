@@ -22,9 +22,8 @@ cargo build
 
 assert "main() { return 42; }" "42"
 assert "main() { return 123; }" "123"
-assert "main() {   return 42;  }" "42"
 assert "main() { return 12+23; }" "35"
-assert "main() { return 12+23+34; }" "69"
+assert "main() { return 12  +23+ 34; }" "69"
 assert "main() { return 23-12; }" "11"
 assert "main() { return 23-12-2+34; }" "43"
 assert "main() { return 2*13; }" "26"
