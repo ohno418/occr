@@ -40,9 +40,7 @@ pub fn gen_expr(expr: &Expr) -> Result<String, String> {
             s.push_str("    push rax\n");
             Ok(s)
         }
-        Expr::FnName(fn_name) => {
-            Err(format!("cannot generate a function: {}", fn_name))
-        }
+        Expr::FnName(fn_name) => Err(format!("cannot generate a function: {}", fn_name)),
         Expr::FnCall(f) => {
             let fn_name = match &**f {
                 Expr::FnName(fn_name) => fn_name,

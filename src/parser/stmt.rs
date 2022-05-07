@@ -1,5 +1,5 @@
 use super::expr::{parse_expr, Expr};
-use crate::lexer::{Token, KwKind};
+use crate::lexer::{KwKind, Token};
 
 #[derive(Debug, PartialEq)]
 pub enum Stmt {
@@ -14,7 +14,6 @@ pub enum Stmt {
 //          | "{" <stmt>* "}"
 //          | <expr> ";"
 pub fn parse_stmt(tokens: &[Token]) -> Result<(Stmt, &[Token]), String> {
-
     // return statement
     if let Some(Token::Kw(KwKind::Return)) = tokens.get(0) {
         let (expr, rest) = parse_expr(&tokens[1..])?;
@@ -68,10 +67,7 @@ mod tests {
 
     #[test]
     fn parse_expression_stmt() {
-        let tokens = vec![
-            Token::Num(42),
-            Token::Punct(";".to_string()),
-        ];
+        let tokens = vec![Token::Num(42), Token::Punct(";".to_string())];
         let expected = Stmt::ExprStmt(Expr::Num(42));
         let (actual, rest) = parse_stmt(&tokens).unwrap();
         assert_eq!(expected, actual);

@@ -58,8 +58,8 @@ pub fn parse_func(tokens: &[Token]) -> Result<(Function, &[Token]), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::*;
     use crate::lexer::KwKind;
+    use crate::parser::*;
 
     #[test]
     fn parses_function_with_multiple_stmt() {

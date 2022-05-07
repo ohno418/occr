@@ -206,11 +206,7 @@ mod tests {
 
     #[test]
     fn parses_mul_expr() {
-        let tokens = vec![
-            Token::Num(2),
-            Token::Punct("*".to_string()),
-            Token::Num(3),
-        ];
+        let tokens = vec![Token::Num(2), Token::Punct("*".to_string()), Token::Num(3)];
         let expected = Expr::Mul(Binary {
             lhs: Box::new(Expr::Num(2)),
             rhs: Box::new(Expr::Num(3)),
