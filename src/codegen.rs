@@ -28,10 +28,12 @@ pub fn gen(ast: &[Function]) -> Result<String, String> {
 mod tests {
     use super::*;
     use crate::parser::{Expr, Stmt};
+    use crate::ty::Ty;
 
     #[test]
     fn gen_single_stmt() {
         let ast = vec![Function {
+            ty: Ty::Int,
             name: "main".to_string(),
             body: vec![Stmt::ExprStmt(Expr::Num(42))],
         }];
@@ -51,6 +53,7 @@ main:
     #[test]
     fn gen_multiple_stmt() {
         let ast = vec![Function {
+            ty: Ty::Int,
             name: "main".to_string(),
             body: vec![Stmt::ExprStmt(Expr::Num(3)), Stmt::ExprStmt(Expr::Num(42))],
         }];
@@ -74,10 +77,12 @@ main:
         // ret() { 42; } main() { 123; }
         let ast = vec![
             Function {
+                ty: Ty::Int,
                 name: "ret".to_string(),
                 body: vec![Stmt::ExprStmt(Expr::Num(42))],
             },
             Function {
+                ty: Ty::Int,
                 name: "main".to_string(),
                 body: vec![Stmt::ExprStmt(Expr::Num(123))],
             },

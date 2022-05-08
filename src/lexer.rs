@@ -13,6 +13,7 @@ pub enum Token {
 #[derive(Debug, PartialEq)]
 pub enum KwKind {
     Return, // return
+    Int,    // int
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
@@ -60,6 +61,7 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
             };
             let tok = match ident {
                 "return" => Token::Kw(KwKind::Return),
+                "int" => Token::Kw(KwKind::Int),
                 _ => Token::Ident(ident.to_string()),
             };
             tokens.push(tok);
@@ -217,9 +219,10 @@ mod tests {
     }
 
     #[test]
-    fn tokenizes_function_with_return_stmt() {
-        let input = "main() { return 42; }";
+    fn tokenizes_function() {
+        let input = "int main() { return 42; }";
         let expected = vec![
+            Token::Kw(KwKind::Int),
             Token::Ident("main".to_string()),
             Token::Punct("(".to_string()),
             Token::Punct(")".to_string()),

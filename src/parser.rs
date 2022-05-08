@@ -25,11 +25,13 @@ pub fn parse(tokens: &[Token]) -> Result<Vec<Function>, String> {
 mod tests {
     use super::*;
     use crate::lexer::KwKind;
+    use crate::ty::Ty;
 
     #[test]
     fn parses_multiple_functions() {
-        // ret() { return 42; } main() { return 123; }
+        // int ret() { return 42; } int main() { return 123; }
         let tokens = vec![
+            Token::Kw(KwKind::Int),
             Token::Ident("ret".to_string()),
             Token::Punct("(".to_string()),
             Token::Punct(")".to_string()),
@@ -38,6 +40,7 @@ mod tests {
             Token::Num(42),
             Token::Punct(";".to_string()),
             Token::Punct("}".to_string()),
+            Token::Kw(KwKind::Int),
             Token::Ident("main".to_string()),
             Token::Punct("(".to_string()),
             Token::Punct(")".to_string()),
@@ -49,10 +52,12 @@ mod tests {
         ];
         let expected = vec![
             Function {
+                ty: Ty::Int,
                 name: "ret".to_string(),
                 body: vec![Stmt::ReturnStmt(Expr::Num(42))],
             },
             Function {
+                ty: Ty::Int,
                 name: "main".to_string(),
                 body: vec![Stmt::ReturnStmt(Expr::Num(123))],
             },
