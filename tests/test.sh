@@ -42,4 +42,12 @@ assert "int main() { 1; return 2; 3; }" "2"
 assert "int main() { 1; return 2; return 3; }" "2"
 assert "int main() { 1; { 2; 3; return 4; } return 5; }" "4"
 
+assert "int main() { if (0) return 1; return 2; }" "2"
+assert "int main() { if (1) return 1; return 2; }" "1"
+assert "int main() { if (2) return 1; return 2; }" "1"
+assert "int main() { if (3) { return 1; } return 2; }" "1"
+assert "int main() { if (3-3) { return 1; } return 2; }" "2"
+assert "int main() { if (3-1) { return 1; } return 2; }" "1"
+assert "int main() { if (0) return 1; if (1) return 2; return 3; }" "2"
+
 echo OK

@@ -1,5 +1,5 @@
 use super::expr::gen_expr;
-use crate::parser::Stmt;
+use crate::parser::{Stmt, IfStruct};
 
 pub fn gen_stmt(stmt: &Stmt, return_label: &str) -> Result<String, String> {
     match stmt {
@@ -12,6 +12,18 @@ pub fn gen_stmt(stmt: &Stmt, return_label: &str) -> Result<String, String> {
             let mut asm = gen_expr(expr)?;
             asm.push_str("    pop rax\n");
             asm.push_str(format!("    jmp {}\n", return_label).as_str());
+            Ok(asm)
+        }
+        Stmt::IfStmt(if_struct) => {
+            // TODO: Make labels unique.
+            let IfStruct { cond, then } = &**if_struct;
+            let else_label = format!(".d.if.else");
+            let mut asm = gen_expr(cond)?;
+            asm.push_str("    pop rax\n");
+            asm.push_str("    cmp rax, 0\n");
+            asm.push_str(format!("    je {}\n", else_label).as_str());
+            asm.push_str(gen_stmt(then, return_label)?.as_str());
+            asm.push_str(format!("{}:\n", else_label).as_str());
             Ok(asm)
         }
         Stmt::CompStmt(stmts) => {
@@ -48,6 +60,21 @@ mod tests {
     jmp some_label
 ";
         let actual = gen_stmt(&ast, "some_label").unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn gen_if_stmt() {
+        let ast = Stmt::IfStmt(Box::new(IfStruct { cond: Expr::Num(1), then: Stmt::ExprStmt(Expr::Num(2)) }));
+        let expected = "    push 1
+    pop rax
+    cmp rax, 0
+    je .d.if.else
+    push 2
+    pop rax
+.d.if.else:
+";
+        let actual = gen_stmt(&ast, ".d.main.return").unwrap();
         assert_eq!(expected, actual);
     }
 

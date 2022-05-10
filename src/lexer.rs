@@ -13,6 +13,7 @@ pub enum Token {
 #[derive(Debug, PartialEq)]
 pub enum KwKind {
     Return, // return
+    If,     // if
     Int,    // int
 }
 
@@ -61,6 +62,7 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
             };
             let tok = match ident {
                 "return" => Token::Kw(KwKind::Return),
+                "if" => Token::Kw(KwKind::If),
                 "int" => Token::Kw(KwKind::Int),
                 _ => Token::Ident(ident.to_string()),
             };
@@ -231,6 +233,21 @@ mod tests {
             Token::Num(42),
             Token::Punct(";".to_string()),
             Token::Punct("}".to_string()),
+        ];
+        let actual = tokenize(input).unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn tokenizes_if_stmt() {
+        let input = "if (0) 123;";
+        let expected = vec![
+            Token::Kw(KwKind::If),
+            Token::Punct("(".to_string()),
+            Token::Num(0),
+            Token::Punct(")".to_string()),
+            Token::Num(123),
+            Token::Punct(";".to_string()),
         ];
         let actual = tokenize(input).unwrap();
         assert_eq!(expected, actual);
