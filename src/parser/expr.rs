@@ -1,4 +1,5 @@
 use crate::lexer::Token;
+use super::consume_punct;
 
 #[derive(Debug, PartialEq)]
 pub enum Expr {
@@ -84,16 +85,12 @@ fn parse_mul(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
 fn parse_postfix(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
     let (mut node, mut rest) = parse_primary(tokens)?;
 
-    match rest.get(0) {
-        Some(Token::Punct(punct)) if punct == "(" => {
+    match consume_punct(rest, "(") {
+        Ok(r) => {
             node = Expr::FnCall(Box::new(node));
-            rest = &rest[1..];
-            match rest.get(0) {
-                Some(Token::Punct(paren_r)) if paren_r == ")" => rest = &rest[1..],
-                _ => return Err(r#"expected "(""#.to_string()),
-            }
+            rest = consume_punct(r, ")")?;
         }
-        _ => (),
+        Err(_) => (),
     }
 
     Ok((node, rest))
@@ -107,12 +104,7 @@ fn parse_primary(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
         // "(" <expr> ")"
         Token::Punct(punct) if punct == "(" => {
             let (node, rest) = parse_expr(&tokens[1..])?;
-            if let Some(Token::Punct(punct)) = rest.get(0) {
-                if punct == ")" {
-                    return Ok((node, &rest[1..]));
-                }
-            }
-            Err("expected terminated parenthesis".to_string())
+            Ok((node, consume_punct(rest, ")")?))
         }
         // function name
         Token::Ident(ident) => {

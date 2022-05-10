@@ -1,4 +1,4 @@
-use super::expr::{parse_expr, Expr};
+use super::{consume_punct, expr::{parse_expr, Expr}};
 use crate::lexer::{KwKind, Token};
 
 #[derive(Debug, PartialEq)]
@@ -26,35 +26,14 @@ pub fn parse_stmt(tokens: &[Token]) -> Result<(Stmt, &[Token]), String> {
         // return statement
         Some(Token::Kw(KwKind::Return)) => {
             let (expr, rest) = parse_expr(&tokens[1..])?;
-            if let Some(Token::Punct(punct)) = rest.get(0) {
-                if punct == ";" {
-                    return Ok((Stmt::ReturnStmt(expr), &rest[1..]));
-                }
-            }
-            Err("expected semicolon".to_string())
+            Ok((Stmt::ReturnStmt(expr), consume_punct(rest, ";")?))
         }
         // if statement
         Some(Token::Kw(KwKind::If)) => {
-            let mut rest = &tokens[1..];
-            // TODO: to util fn
-            if let Some(Token::Punct(punct)) = rest.get(0) {
-                if punct == "(" {
-                    rest = &rest[1..];
-                } else {
-                    return Err(r#"expected "(""#.to_string());
-                }
-            }
-            let cond;
-            (cond, rest) = parse_expr(rest)?;
-            if let Some(Token::Punct(punct)) = rest.get(0) {
-                if punct == ")" {
-                    rest = &rest[1..];
-                } else {
-                    return Err(r#"expected ")""#.to_string());
-                }
-            }
-            let then;
-            (then, rest) = parse_stmt(rest)?;
+            let rest = consume_punct(&tokens[1..], "(")?;
+            let (cond, rest) = parse_expr(rest)?;
+            let rest = consume_punct(rest, ")")?;
+            let (then, rest) = parse_stmt(rest)?;
             Ok((Stmt::IfStmt(Box::new(IfStruct { cond, then })), rest))
         }
         Some(tok) => {
@@ -67,16 +46,17 @@ pub fn parse_stmt(tokens: &[Token]) -> Result<(Stmt, &[Token]), String> {
                         let mut stmts: Vec<Stmt> = Vec::new();
                         let mut rest = &tokens[1..];
                         loop {
-                            if let Some(Token::Punct(punct)) = rest.get(0) {
-                                if punct == "}" {
-                                    rest = &rest[1..];
+                            match consume_punct(rest, "}") {
+                                Ok(r) => {
+                                    rest = r;
                                     break;
                                 }
+                                Err(_) => {
+                                    let stmt;
+                                    (stmt, rest) = parse_stmt(rest)?;
+                                    stmts.push(stmt);
+                                }
                             }
-
-                            let stmt;
-                            (stmt, rest) = parse_stmt(rest)?;
-                            stmts.push(stmt);
                         }
                         return Ok((Stmt::CompStmt(stmts), rest))
                     }
@@ -86,12 +66,7 @@ pub fn parse_stmt(tokens: &[Token]) -> Result<(Stmt, &[Token]), String> {
 
             // expression statement
             let (expr, rest) = parse_expr(tokens)?;
-            if let Some(Token::Punct(punct)) = rest.get(0) {
-                if punct == ";" {
-                    return Ok((Stmt::ExprStmt(expr), &rest[1..]));
-                }
-            }
-            Err("expected semicolon".to_string())
+            Ok((Stmt::ExprStmt(expr), consume_punct(rest, ";")?))
         }
         None => Err("expected a stetement, but got no token".to_string()),
     }

@@ -1,4 +1,4 @@
-use super::stmt::{parse_stmt, Stmt};
+use super::{consume_punct, stmt::{parse_stmt, Stmt}};
 use crate::lexer::{KwKind, Token};
 use crate::ty::Ty;
 
@@ -11,49 +11,33 @@ pub struct Function {
 
 // <function> ::= <type> ident "(" ")" "{" <stmt>* "}"
 pub fn parse_func(tokens: &[Token]) -> Result<(Function, &[Token]), String> {
-    let mut rest = &tokens[..];
-
     // type
-    let ty;
-    (ty, rest) = parse_type(rest)?;
+    let (ty, rest) = parse_type(tokens)?;
 
     // name
     let name = match rest.get(0) {
         Some(Token::Ident(name)) => name.clone(),
         _ => return Err(format!("expected a function name: {:?}", rest)),
     };
-    rest = &rest[1..];
+    let rest = &rest[1..];
 
-    if let Some(Token::Punct(p)) = rest.get(0) {
-        if p != "(" {
-            return Err(format!(r#"expected "(", but get {}"#, p));
-        }
-        rest = &rest[1..];
-    }
-    if let Some(Token::Punct(p)) = rest.get(0) {
-        if p != ")" {
-            return Err(format!(r#"expected ")", but get {}"#, p));
-        }
-        rest = &rest[1..];
-    }
-    if let Some(Token::Punct(p)) = rest.get(0) {
-        if p != "{" {
-            return Err(format!(r#"expected "{{", but get {}"#, p));
-        }
-        rest = &rest[1..];
-    }
+    let rest = consume_punct(rest, "(")?;
+    let rest = consume_punct(rest, ")")?;
+    let rest = consume_punct(rest, "{")?;
 
     // body
     let mut body: Vec<Stmt> = Vec::new();
+    let mut rest = rest;
     loop {
-        let stmt;
-        (stmt, rest) = parse_stmt(rest)?;
-        body.push(stmt);
-
-        if let Some(Token::Punct(p)) = rest.get(0) {
-            if p == "}" {
-                rest = &rest[1..];
+        match consume_punct(rest, "}") {
+            Ok(r) => {
+                rest = r;
                 break;
+            }
+            Err(_) => {
+                let (stmt, r) = parse_stmt(rest)?;
+                body.push(stmt);
+                rest = r;
             }
         }
     }

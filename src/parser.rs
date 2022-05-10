@@ -21,6 +21,15 @@ pub fn parse(tokens: &[Token]) -> Result<Vec<Function>, String> {
     Ok(funcs)
 }
 
+// Consumes a punct token from the start of tokens,
+// then returns rest of the tokens.
+fn consume_punct<'a>(tokens: &'a [Token], punct: &str) -> Result<&'a [Token], String> {
+    match tokens.get(0) {
+        Some(Token::Punct(p)) if p == punct => Ok(&tokens[1..]),
+        _ => Err(format!(r#"expected "{}""#, punct)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
