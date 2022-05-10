@@ -44,7 +44,7 @@ pub fn gen_expr(expr: &Expr) -> Result<String, String> {
         Expr::FnCall(f) => {
             let fn_name = match &**f {
                 Expr::FnName(fn_name) => fn_name,
-                _ => return Err("todo".to_string()),
+                _ => return Err("expected a function identifier".to_string()),
             };
             let mut s = format!("    call {}\n", fn_name);
             s.push_str("    push rax\n");
