@@ -100,19 +100,19 @@ fn parse_postfix(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
 //             | func-name
 //             | number
 fn parse_primary(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
-    match tokens.get(0).expect("expected some primary expression") {
+    match tokens.get(0) {
         // "(" <expr> ")"
-        Token::Punct(punct) if punct == "(" => {
+        Some(Token::Punct(punct)) if punct == "(" => {
             let (node, rest) = parse_expr(&tokens[1..])?;
             Ok((node, consume_punct(rest, ")")?))
         }
         // function name
-        Token::Ident(ident) => {
+        Some(Token::Ident(ident)) => {
             // TODO: Check if the function exists.
             Ok((Expr::FnName(ident.clone()), &tokens[1..]))
         }
         // number
-        Token::Num(num) => Ok((Expr::Num(*num), &tokens[1..])),
+        Some(Token::Num(num)) => Ok((Expr::Num(*num), &tokens[1..])),
         _ => Err("failed to parse primary expression".to_string()),
     }
 }
