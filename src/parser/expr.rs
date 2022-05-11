@@ -1,13 +1,13 @@
-use crate::lexer::Token;
 use super::consume_punct;
+use crate::lexer::Token;
 
 #[derive(Debug, PartialEq)]
 pub enum Expr {
     Num(u64),
-    Add(Box<Binary>),       // +
-    Sub(Box<Binary>),       // -
-    Mul(Box<Binary>),       // *
-    Div(Box<Binary>),       // *
+    Add(Box<Binary>),  // +
+    Sub(Box<Binary>),  // -
+    Mul(Box<Binary>),  // *
+    Div(Box<Binary>),  // *
     FnName(String),    // Function identifier
     FnCall(Box<Expr>), // function call
 }

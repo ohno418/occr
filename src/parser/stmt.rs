@@ -1,4 +1,7 @@
-use super::{consume_punct, expr::{parse_expr, Expr}};
+use super::{
+    consume_punct,
+    expr::{parse_expr, Expr},
+};
 use crate::lexer::{KwKind, Token};
 
 #[derive(Debug, PartialEq)]
@@ -58,7 +61,7 @@ pub fn parse_stmt(tokens: &[Token]) -> Result<(Stmt, &[Token]), String> {
                                 }
                             }
                         }
-                        return Ok((Stmt::CompStmt(stmts), rest))
+                        return Ok((Stmt::CompStmt(stmts), rest));
                     }
                     _ => (),
                 }
@@ -109,7 +112,10 @@ mod tests {
             Token::Num(2),
             Token::Punct(";".to_string()),
         ];
-        let expected = Stmt::IfStmt(Box::new(IfStruct { cond: Expr::Num(1), then: Stmt::ExprStmt(Expr::Num(2)) }));
+        let expected = Stmt::IfStmt(Box::new(IfStruct {
+            cond: Expr::Num(1),
+            then: Stmt::ExprStmt(Expr::Num(2)),
+        }));
         let (actual, rest) = parse_stmt(&tokens).unwrap();
         assert_eq!(expected, actual);
         assert_eq!(Vec::<Token>::new(), rest);
@@ -130,7 +136,13 @@ mod tests {
             Token::Punct(";".to_string()),
             Token::Punct("}".to_string()),
         ];
-        let expected = Stmt::IfStmt(Box::new(IfStruct { cond: Expr::Num(1), then: Stmt::CompStmt(vec![Stmt::ExprStmt(Expr::Num(2)), Stmt::ExprStmt(Expr::Num(3))]) }));
+        let expected = Stmt::IfStmt(Box::new(IfStruct {
+            cond: Expr::Num(1),
+            then: Stmt::CompStmt(vec![
+                Stmt::ExprStmt(Expr::Num(2)),
+                Stmt::ExprStmt(Expr::Num(3)),
+            ]),
+        }));
         let (actual, rest) = parse_stmt(&tokens).unwrap();
         assert_eq!(expected, actual);
         assert_eq!(Vec::<Token>::new(), rest);

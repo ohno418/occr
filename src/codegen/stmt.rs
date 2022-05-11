@@ -1,5 +1,5 @@
 use super::expr::gen_expr;
-use crate::parser::{Stmt, IfStruct};
+use crate::parser::{IfStruct, Stmt};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 struct LabelCounter;
@@ -75,7 +75,10 @@ mod tests {
 
     #[test]
     fn gen_if_stmt() {
-        let ast = Stmt::IfStmt(Box::new(IfStruct { cond: Expr::Num(1), then: Stmt::ExprStmt(Expr::Num(2)) }));
+        let ast = Stmt::IfStmt(Box::new(IfStruct {
+            cond: Expr::Num(1),
+            then: Stmt::ExprStmt(Expr::Num(2)),
+        }));
         let expected = "    push 1
     pop rax
     cmp rax, 0

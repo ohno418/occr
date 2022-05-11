@@ -7,7 +7,7 @@ use func::parse_func;
 
 pub use expr::{Binary, Expr};
 pub use func::Function;
-pub use stmt::{Stmt, IfStruct};
+pub use stmt::{IfStruct, Stmt};
 
 // <program> ::= <function>*
 pub fn parse(tokens: &[Token]) -> Result<Vec<Function>, String> {

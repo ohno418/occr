@@ -1,4 +1,7 @@
-use super::{consume_punct, stmt::{parse_stmt, Stmt}};
+use super::{
+    consume_punct,
+    stmt::{parse_stmt, Stmt},
+};
 use crate::lexer::{KwKind, Token};
 use crate::ty::Ty;
 
