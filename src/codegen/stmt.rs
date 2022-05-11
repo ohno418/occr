@@ -1,5 +1,15 @@
 use super::expr::gen_expr;
 use crate::parser::{Stmt, IfStruct};
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+struct LabelCounter;
+
+impl LabelCounter {
+    fn get() -> usize {
+        static IDX: AtomicUsize = AtomicUsize::new(0);
+        IDX.fetch_add(1, Ordering::Relaxed)
+    }
+}
 
 pub fn gen_stmt(stmt: &Stmt, return_label: &str) -> Result<String, String> {
     match stmt {
@@ -17,7 +27,7 @@ pub fn gen_stmt(stmt: &Stmt, return_label: &str) -> Result<String, String> {
         Stmt::IfStmt(if_struct) => {
             // TODO: Make labels unique.
             let IfStruct { cond, then } = &**if_struct;
-            let else_label = format!(".d.if.else");
+            let else_label = format!(".d.if.else.{}", LabelCounter::get());
             let mut asm = gen_expr(cond)?;
             asm.push_str("    pop rax\n");
             asm.push_str("    cmp rax, 0\n");
@@ -69,10 +79,10 @@ mod tests {
         let expected = "    push 1
     pop rax
     cmp rax, 0
-    je .d.if.else
+    je .d.if.else.0
     push 2
     pop rax
-.d.if.else:
+.d.if.else.0:
 ";
         let actual = gen_stmt(&ast, ".d.main.return").unwrap();
         assert_eq!(expected, actual);
