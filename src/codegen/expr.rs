@@ -3,36 +3,40 @@ use crate::parser::{Binary, Expr};
 pub fn gen_expr(expr: &Expr) -> Result<String, String> {
     match expr {
         Expr::Num(n) => Ok(format!("    push {}\n", n)),
-        Expr::Add(Binary { lhs, rhs }) => {
-            let mut s = gen_expr(lhs)?;
-            s.push_str(&gen_expr(rhs)?);
+        Expr::Add(bin) => {
+            let Binary { lhs, rhs } = &**bin;
+            let mut s = gen_expr(&lhs)?;
+            s.push_str(&gen_expr(&rhs)?);
             s.push_str("    pop rdi\n");
             s.push_str("    pop rax\n");
             s.push_str("    add rax, rdi\n");
             s.push_str("    push rax\n");
             Ok(s)
         }
-        Expr::Sub(Binary { lhs, rhs }) => {
-            let mut s = gen_expr(lhs)?;
-            s.push_str(&gen_expr(rhs)?);
+        Expr::Sub(bin) => {
+            let Binary { lhs, rhs } = &**bin;
+            let mut s = gen_expr(&lhs)?;
+            s.push_str(&gen_expr(&rhs)?);
             s.push_str("    pop rdi\n");
             s.push_str("    pop rax\n");
             s.push_str("    sub rax, rdi\n");
             s.push_str("    push rax\n");
             Ok(s)
         }
-        Expr::Mul(Binary { lhs, rhs }) => {
-            let mut s = gen_expr(lhs)?;
-            s.push_str(&gen_expr(rhs)?);
+        Expr::Mul(bin) => {
+            let Binary { lhs, rhs } = &**bin;
+            let mut s = gen_expr(&lhs)?;
+            s.push_str(&gen_expr(&rhs)?);
             s.push_str("    pop rdi\n");
             s.push_str("    pop rax\n");
             s.push_str("    imul rax, rdi\n");
             s.push_str("    push rax\n");
             Ok(s)
         }
-        Expr::Div(Binary { lhs, rhs }) => {
-            let mut s = gen_expr(lhs)?;
-            s.push_str(&gen_expr(rhs)?);
+        Expr::Div(bin) => {
+            let Binary { lhs, rhs } = &**bin;
+            let mut s = gen_expr(&lhs)?;
+            s.push_str(&gen_expr(&rhs)?);
             s.push_str("    pop rdi\n");
             s.push_str("    pop rax\n");
             s.push_str("    xor rdx, rdx\n");
@@ -70,10 +74,7 @@ mod tests {
     fn gen_add_expr() {
         let lhs = Expr::Num(12);
         let rhs = Expr::Num(23);
-        let expr = Expr::Add(Binary {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-        });
+        let expr = Expr::Add(Box::new(Binary { lhs, rhs }));
         let expected = "    push 12
     push 23
     pop rdi
@@ -87,15 +88,12 @@ mod tests {
 
     #[test]
     fn gen_nested_add_expr() {
-        let lhs = Expr::Add(Binary {
-            lhs: Box::new(Expr::Num(12)),
-            rhs: Box::new(Expr::Num(23)),
-        });
+        let lhs = Expr::Add(Box::new(Binary {
+            lhs: Expr::Num(12),
+            rhs: Expr::Num(23),
+        }));
         let rhs = Expr::Num(34);
-        let expr = Expr::Add(Binary {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-        });
+        let expr = Expr::Add(Box::new(Binary { lhs, rhs }));
         let expected = "    push 12
     push 23
     pop rdi
@@ -116,10 +114,7 @@ mod tests {
     fn gen_sub_expr() {
         let lhs = Expr::Num(23);
         let rhs = Expr::Num(12);
-        let expr = Expr::Sub(Binary {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-        });
+        let expr = Expr::Sub(Box::new(Binary { lhs, rhs }));
         let expected = "    push 23
     push 12
     pop rdi
@@ -135,10 +130,7 @@ mod tests {
     fn gen_mul_expr() {
         let lhs = Expr::Num(2);
         let rhs = Expr::Num(3);
-        let expr = Expr::Mul(Binary {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-        });
+        let expr = Expr::Mul(Box::new(Binary { lhs, rhs }));
         let expected = "    push 2
     push 3
     pop rdi
@@ -154,10 +146,7 @@ mod tests {
     fn gen_div_expr() {
         let lhs = Expr::Num(4);
         let rhs = Expr::Num(2);
-        let expr = Expr::Div(Binary {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-        });
+        let expr = Expr::Div(Box::new(Binary { lhs, rhs }));
         let expected = "    push 4
     push 2
     pop rdi
