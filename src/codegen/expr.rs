@@ -1,6 +1,6 @@
 use crate::parser::{Binary, Expr};
 
-pub fn gen_expr(expr: &Expr) -> Result<String, String> {
+pub(super) fn gen_expr(expr: &Expr) -> Result<String, String> {
     match expr {
         Expr::Num(n) => Ok(format!("    push {}\n", n)),
         Expr::Add(bin) => {

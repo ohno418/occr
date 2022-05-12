@@ -24,7 +24,7 @@ pub struct IfStruct {
 //          | ";"
 //          | "{" <stmt>* "}"
 //          | <expr> ";"
-pub fn parse_stmt(tokens: &[Token]) -> Result<(Stmt, &[Token]), String> {
+pub(super) fn parse_stmt(tokens: &[Token]) -> Result<(Stmt, &[Token]), String> {
     match tokens.get(0) {
         // return statement
         Some(Token::Kw(KwKind::Return)) => {

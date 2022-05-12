@@ -13,7 +13,7 @@ pub struct Function {
 }
 
 // <function> ::= <type> ident "(" ")" "{" <stmt>* "}"
-pub fn parse_func(tokens: &[Token]) -> Result<(Function, &[Token]), String> {
+pub(super) fn parse_func(tokens: &[Token]) -> Result<(Function, &[Token]), String> {
     // type
     let (ty, rest) = parse_type(tokens)?;
 

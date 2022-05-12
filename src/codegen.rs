@@ -27,14 +27,14 @@ pub fn gen(ast: &[Function]) -> Result<String, String> {
 }
 
 // This provides an index number to a label to make it globally unique.
-pub struct LabelIndex(u64);
+struct LabelIndex(u64);
 
 impl LabelIndex {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self(0)
     }
 
-    pub fn get(&mut self) -> u64 {
+    fn get(&mut self) -> u64 {
         let prev = self.0;
         self.0 = prev + 1;
         prev

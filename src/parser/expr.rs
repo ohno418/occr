@@ -19,7 +19,7 @@ pub struct Binary {
 }
 
 // <expr> ::= <add>
-pub fn parse_expr(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
+pub(super) fn parse_expr(tokens: &[Token]) -> Result<(Expr, &[Token]), String> {
     parse_add(tokens)
 }
 

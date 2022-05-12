@@ -1,7 +1,7 @@
 use super::{expr::gen_expr, LabelIndex};
 use crate::parser::{IfStruct, Stmt};
 
-pub fn gen_stmt(
+pub(super) fn gen_stmt(
     stmt: &Stmt,
     return_label: &str,
     label_index: &mut LabelIndex,
