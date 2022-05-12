@@ -1,17 +1,11 @@
-use super::expr::gen_expr;
+use super::{expr::gen_expr, LabelIndex};
 use crate::parser::{IfStruct, Stmt};
-use std::sync::atomic::{AtomicUsize, Ordering};
 
-struct LabelCounter;
-
-impl LabelCounter {
-    fn get() -> usize {
-        static IDX: AtomicUsize = AtomicUsize::new(0);
-        IDX.fetch_add(1, Ordering::Relaxed)
-    }
-}
-
-pub fn gen_stmt(stmt: &Stmt, return_label: &str) -> Result<String, String> {
+pub fn gen_stmt(
+    stmt: &Stmt,
+    return_label: &str,
+    label_index: &mut LabelIndex,
+) -> Result<String, String> {
     match stmt {
         Stmt::ExprStmt(expr) => {
             let mut asm = gen_expr(expr)?;
@@ -25,21 +19,20 @@ pub fn gen_stmt(stmt: &Stmt, return_label: &str) -> Result<String, String> {
             Ok(asm)
         }
         Stmt::IfStmt(if_struct) => {
-            // TODO: Make labels unique.
             let IfStruct { cond, then } = &**if_struct;
-            let else_label = format!(".d.if.else.{}", LabelCounter::get());
+            let else_label = format!(".d.if.else.{}", label_index.get());
             let mut asm = gen_expr(cond)?;
             asm.push_str("    pop rax\n");
             asm.push_str("    cmp rax, 0\n");
             asm.push_str(format!("    je {}\n", else_label).as_str());
-            asm.push_str(gen_stmt(then, return_label)?.as_str());
+            asm.push_str(gen_stmt(then, return_label, label_index)?.as_str());
             asm.push_str(format!("{}:\n", else_label).as_str());
             Ok(asm)
         }
         Stmt::CompStmt(stmts) => {
             let mut asm = "".to_string();
             for stmt in stmts {
-                asm.push_str(gen_stmt(stmt, return_label)?.as_str());
+                asm.push_str(gen_stmt(stmt, return_label, label_index)?.as_str());
             }
             Ok(asm)
         }
@@ -58,7 +51,7 @@ mod tests {
         let expected = "    push 42
     pop rax
 ";
-        let actual = gen_stmt(&ast, ".d.main.return").unwrap();
+        let actual = gen_stmt(&ast, ".d.main.return", &mut LabelIndex::new()).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -69,7 +62,7 @@ mod tests {
     pop rax
     jmp some_label
 ";
-        let actual = gen_stmt(&ast, "some_label").unwrap();
+        let actual = gen_stmt(&ast, "some_label", &mut LabelIndex::new()).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -87,7 +80,7 @@ mod tests {
     pop rax
 .d.if.else.0:
 ";
-        let actual = gen_stmt(&ast, ".d.main.return").unwrap();
+        let actual = gen_stmt(&ast, ".d.main.return", &mut LabelIndex::new()).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -102,7 +95,7 @@ mod tests {
     push 3
     pop rax
 ";
-        let actual = gen_stmt(&ast, ".d.main.return").unwrap();
+        let actual = gen_stmt(&ast, ".d.main.return", &mut LabelIndex::new()).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -110,7 +103,7 @@ mod tests {
     fn gen_null_stmt() {
         let ast = Stmt::NullStmt;
         let expected = "";
-        let actual = gen_stmt(&ast, ".d.main.return").unwrap();
+        let actual = gen_stmt(&ast, ".d.main.return", &mut LabelIndex::new()).unwrap();
         assert_eq!(expected, actual);
     }
 }

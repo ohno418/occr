@@ -5,6 +5,8 @@ use crate::parser::Function;
 use stmt::gen_stmt;
 
 pub fn gen(ast: &[Function]) -> Result<String, String> {
+    let mut label_index = LabelIndex::new();
+
     let mut asm = "    .intel_syntax noprefix
     .text
     .globl main
@@ -16,12 +18,27 @@ pub fn gen(ast: &[Function]) -> Result<String, String> {
 
         asm.push_str(&format!("{}:\n", func.name));
         for stmt in &func.body {
-            asm.push_str(&gen_stmt(&stmt, &return_label)?);
+            asm.push_str(&gen_stmt(&stmt, &return_label, &mut label_index)?);
         }
         asm.push_str(format!("{}:\n", return_label).as_str());
         asm.push_str("    ret\n");
     }
     Ok(asm)
+}
+
+// This provides an index number to a label to make it globally unique.
+pub struct LabelIndex(u64);
+
+impl LabelIndex {
+    pub fn new() -> Self {
+        Self(0)
+    }
+
+    pub fn get(&mut self) -> u64 {
+        let prev = self.0;
+        self.0 = prev + 1;
+        prev
+    }
 }
 
 #[cfg(test)]
